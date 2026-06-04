@@ -1,5 +1,5 @@
 from pydantic import BaseModel
-from decimal import Decimal
+from typing import Literal
 
 
 # ============================================
@@ -10,15 +10,11 @@ class OrderCreate(BaseModel):
 
     customer_id: int
 
-    order_type: str
-
-    subtotal: Decimal
-
-    tax_amount: Decimal = 0
-
-    discount_amount: Decimal = 0
-
-    total_amount: Decimal
+    order_type: Literal[
+        "Dine-In",
+        "Takeaway",
+        "Online"
+    ]
 
 
 # ============================================
@@ -29,17 +25,17 @@ class OrderUpdate(BaseModel):
 
     customer_id: int
 
-    order_type: str
+    order_type: Literal[
+        "Dine-In",
+        "Takeaway",
+        "Online"
+    ]
 
-    order_status: str
-
-    subtotal: Decimal
-
-    tax_amount: Decimal = 0
-
-    discount_amount: Decimal = 0
-
-    total_amount: Decimal
+    order_status: Literal[
+        "On Process",
+        "Completed",
+        "Cancelled"
+    ]
 
 
 # ============================================
@@ -48,4 +44,8 @@ class OrderUpdate(BaseModel):
 
 class OrderStatusUpdate(BaseModel):
 
-    order_status: str
+    order_status: Literal[
+        "On Process",
+        "Completed",
+        "Cancelled"
+    ]

@@ -12,7 +12,6 @@ from app.schemas.order_schemas import (
 
 router = APIRouter()
 
-
 # CREATE ORDER
 
 @router.post("/orders")
@@ -23,48 +22,29 @@ def create_order(
 
     try:
 
-        # VALIDATION
-
-        if payload.subtotal <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subtotal must be greater than 0"
-            )
-
-        if payload.total_amount <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Total amount must be greater than 0"
-            )
-
         query = text("""
             EXEC Reztro.CreateOrder
                 @customer_id = :customer_id,
-                @order_type = :order_type,
-                @subtotal = :subtotal,
-                @tax_amount = :tax_amount,
-                @discount_amount = :discount_amount,
-                @total_amount = :total_amount
+                @order_type = :order_type
         """)
 
-        db.execute(query, {
-            "customer_id": payload.customer_id,
-            "order_type": payload.order_type,
-            "subtotal": payload.subtotal,
-            "tax_amount": payload.tax_amount,
-            "discount_amount": payload.discount_amount,
-            "total_amount": payload.total_amount
-        })
+        result = db.execute(
+            query,
+            {
+                "customer_id": payload.customer_id,
+                "order_type": payload.order_type
+            }
+        )
+
+        order = result.mappings().first()
 
         db.commit()
 
         return {
             "success": True,
-            "message": "Order created successfully"
+            "message": "Order created successfully",
+            "order_id": order["order_id"]
         }
-
-    except HTTPException as e:
-        raise e
 
     except SQLAlchemyError as e:
 
@@ -107,7 +87,9 @@ def get_orders(
         )
 
 
+# ============================================
 # GET ORDER BY ID
+# ============================================
 
 @router.get("/orders/{order_id}")
 def get_order_by_id(
@@ -122,9 +104,12 @@ def get_order_by_id(
                 @order_id = :order_id
         """)
 
-        result = db.execute(query, {
-            "order_id": order_id
-        })
+        result = db.execute(
+            query,
+            {
+                "order_id": order_id
+            }
+        )
 
         order = result.mappings().first()
 
@@ -150,7 +135,9 @@ def get_order_by_id(
         )
 
 
+# ============================================
 # UPDATE ORDER
+# ============================================
 
 @router.put("/orders/{order_id}")
 def update_order(
@@ -161,40 +148,23 @@ def update_order(
 
     try:
 
-        if payload.subtotal <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Subtotal must be greater than 0"
-            )
-
-        if payload.total_amount <= 0:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Total amount must be greater than 0"
-            )
-
         query = text("""
             EXEC Reztro.UpdateOrder
                 @order_id = :order_id,
                 @customer_id = :customer_id,
                 @order_type = :order_type,
-                @order_status = :order_status,
-                @subtotal = :subtotal,
-                @tax_amount = :tax_amount,
-                @discount_amount = :discount_amount,
-                @total_amount = :total_amount
+                @order_status = :order_status
         """)
 
-        db.execute(query, {
-            "order_id": order_id,
-            "customer_id": payload.customer_id,
-            "order_type": payload.order_type,
-            "order_status": payload.order_status,
-            "subtotal": payload.subtotal,
-            "tax_amount": payload.tax_amount,
-            "discount_amount": payload.discount_amount,
-            "total_amount": payload.total_amount
-        })
+        db.execute(
+            query,
+            {
+                "order_id": order_id,
+                "customer_id": payload.customer_id,
+                "order_type": payload.order_type,
+                "order_status": payload.order_status
+            }
+        )
 
         db.commit()
 
@@ -203,9 +173,6 @@ def update_order(
             "message": "Order updated successfully"
         }
 
-    except HTTPException as e:
-        raise e
-
     except SQLAlchemyError as e:
 
         db.rollback()
@@ -216,7 +183,9 @@ def update_order(
         )
 
 
+# ============================================
 # UPDATE ORDER STATUS
+# ============================================
 
 @router.patch("/orders/{order_id}/status")
 def update_order_status(
@@ -225,18 +194,7 @@ def update_order_status(
     db=Depends(get_db)
 ):
 
-    try:    
-        valid_status = [
-            "On Process",
-            "Completed",
-            "Cancelled"
-        ]
-
-        if payload.order_status not in valid_status:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid order status"
-            )
+    try:
 
         query = text("""
             EXEC Reztro.UpdateOrderStatus
@@ -244,10 +202,13 @@ def update_order_status(
                 @order_status = :order_status
         """)
 
-        db.execute(query, {
-            "order_id": order_id,
-            "order_status": payload.order_status
-        })
+        db.execute(
+            query,
+            {
+                "order_id": order_id,
+                "order_status": payload.order_status
+            }
+        )
 
         db.commit()
 
@@ -255,9 +216,6 @@ def update_order_status(
             "success": True,
             "message": "Order status updated successfully"
         }
-
-    except HTTPException as e:
-        raise e
 
     except SQLAlchemyError as e:
 
@@ -269,7 +227,9 @@ def update_order_status(
         )
 
 
+# ============================================
 # DELETE / CANCEL ORDER
+# ============================================
 
 @router.delete("/orders/{order_id}")
 def delete_order(
@@ -284,9 +244,12 @@ def delete_order(
                 @order_id = :order_id
         """)
 
-        db.execute(query, {
-            "order_id": order_id
-        })
+        db.execute(
+            query,
+            {
+                "order_id": order_id
+            }
+        )
 
         db.commit()
 
