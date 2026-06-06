@@ -1,19 +1,36 @@
-from pydantic import BaseModel
+from pydantic import (
+    BaseModel,
+    Field
+)
 
-# CREATE ORDER ITEM
 
 class OrderItemCreate(BaseModel):
 
-    order_id: int
-    menu_id: int
-    quantity: int
-    notes: str | None = None
+    order_id: int = Field(..., gt=0)
 
+    menu_id: int = Field(..., gt=0)
 
-# UPDATE ORDER ITEM
+    quantity: int = Field(
+        ...,
+        gt=0
+    )
+
+    notes: str | None = Field(
+        None,
+        max_length=500
+    )
+
 
 class OrderItemUpdate(BaseModel):
 
-    menu_id: int
-    quantity: int
-    notes: str | None = None
+    menu_id: int = Field(..., gt=0)
+
+    quantity: int = Field(
+        ...,
+        gt=0
+    )
+
+    notes: str | None = Field(
+        None,
+        max_length=500
+    )

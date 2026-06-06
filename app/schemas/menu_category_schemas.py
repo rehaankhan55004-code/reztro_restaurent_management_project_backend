@@ -1,14 +1,19 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
-# CREATE CATEGORY
 
 class MenuCategoryCreate(BaseModel):
 
-    category_name: str
+    category_name: str = Field(
+        ...,
+        min_length=2,
+        max_length=100
+    )
 
-
-# UPDATE CATEGORY
 
 class MenuCategoryUpdate(BaseModel):
 
-    category_name: str
+    category_name: str = Field(
+        ...,
+        min_length=2,
+        max_length=100
+    )

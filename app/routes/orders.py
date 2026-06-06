@@ -1,6 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import APIRouter, Depends
 
 from app.db.database import get_db
 
@@ -10,9 +8,32 @@ from app.schemas.order_schemas import (
     OrderStatusUpdate
 )
 
-router = APIRouter()
+from app.schemas.order_item_schemas import (
+    OrderItemCreate,
+    OrderItemUpdate
+)
 
-# CREATE ORDER
+from app.services.order_service import (
+    create_order_service,
+    get_orders_service,
+    get_order_by_id_service,
+    update_order_service,
+    update_order_status_service,
+    delete_order_service,
+
+    add_order_item_service,
+    get_order_items_service,
+    get_order_items_by_order_id_service,
+    get_order_item_by_id_service,
+    update_order_item_service,
+    delete_order_item_service
+)
+
+router = APIRouter(
+    tags=["Orders"]
+)
+
+# ORDERS
 
 @router.post("/orders")
 def create_order(
@@ -20,76 +41,31 @@ def create_order(
     db=Depends(get_db)
 ):
 
-    try:
+    order = create_order_service(
+        db,
+        payload
+    )
 
-        query = text("""
-            EXEC Reztro.CreateOrder
-                @customer_id = :customer_id,
-                @order_type = :order_type
-        """)
+    return {
+        "success": True,
+        "message": "Order created successfully",
+        "order_id": order["order_id"]
+    }
 
-        result = db.execute(
-            query,
-            {
-                "customer_id": payload.customer_id,
-                "order_type": payload.order_type
-            }
-        )
-
-        order = result.mappings().first()
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Order created successfully",
-            "order_id": order["order_id"]
-        }
-
-    except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-
-# GET ALL ORDERS
 
 @router.get("/orders")
 def get_orders(
     db=Depends(get_db)
 ):
 
-    try:
+    orders = get_orders_service(db)
 
-        query = text("""
-            EXEC Reztro.GetOrders
-        """)
+    return {
+        "success": True,
+        "count": len(orders),
+        "data": orders
+    }
 
-        result = db.execute(query)
-
-        orders = result.mappings().all()
-
-        return {
-            "success": True,
-            "count": len(orders),
-            "data": orders
-        }
-
-    except SQLAlchemyError as e:
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-
-# ============================================
-# GET ORDER BY ID
-# ============================================
 
 @router.get("/orders/{order_id}")
 def get_order_by_id(
@@ -97,47 +73,16 @@ def get_order_by_id(
     db=Depends(get_db)
 ):
 
-    try:
+    order = get_order_by_id_service(
+        db,
+        order_id
+    )
 
-        query = text("""
-            EXEC Reztro.GetOrderById
-                @order_id = :order_id
-        """)
+    return {
+        "success": True,
+        "data": order
+    }
 
-        result = db.execute(
-            query,
-            {
-                "order_id": order_id
-            }
-        )
-
-        order = result.mappings().first()
-
-        if not order:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order not found"
-            )
-
-        return {
-            "success": True,
-            "data": order
-        }
-
-    except HTTPException as e:
-        raise e
-
-    except SQLAlchemyError as e:
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-
-# ============================================
-# UPDATE ORDER
-# ============================================
 
 @router.put("/orders/{order_id}")
 def update_order(
@@ -146,46 +91,17 @@ def update_order(
     db=Depends(get_db)
 ):
 
-    try:
+    update_order_service(
+        db,
+        order_id,
+        payload
+    )
 
-        query = text("""
-            EXEC Reztro.UpdateOrder
-                @order_id = :order_id,
-                @customer_id = :customer_id,
-                @order_type = :order_type,
-                @order_status = :order_status
-        """)
+    return {
+        "success": True,
+        "message": "Order updated successfully"
+    }
 
-        db.execute(
-            query,
-            {
-                "order_id": order_id,
-                "customer_id": payload.customer_id,
-                "order_type": payload.order_type,
-                "order_status": payload.order_status
-            }
-        )
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Order updated successfully"
-        }
-
-    except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-
-# ============================================
-# UPDATE ORDER STATUS
-# ============================================
 
 @router.patch("/orders/{order_id}/status")
 def update_order_status(
@@ -194,42 +110,17 @@ def update_order_status(
     db=Depends(get_db)
 ):
 
-    try:
+    update_order_status_service(
+        db,
+        order_id,
+        payload
+    )
 
-        query = text("""
-            EXEC Reztro.UpdateOrderStatus
-                @order_id = :order_id,
-                @order_status = :order_status
-        """)
+    return {
+        "success": True,
+        "message": "Order status updated successfully"
+    }
 
-        db.execute(
-            query,
-            {
-                "order_id": order_id,
-                "order_status": payload.order_status
-            }
-        )
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Order status updated successfully"
-        }
-
-    except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
-
-
-# ============================================
-# DELETE / CANCEL ORDER
-# ============================================
 
 @router.delete("/orders/{order_id}")
 def delete_order(
@@ -237,32 +128,118 @@ def delete_order(
     db=Depends(get_db)
 ):
 
-    try:
+    delete_order_service(
+        db,
+        order_id
+    )
 
-        query = text("""
-            EXEC Reztro.DeleteOrder
-                @order_id = :order_id
-        """)
+    return {
+        "success": True,
+        "message": "Order cancelled successfully"
+    }
 
-        db.execute(
-            query,
-            {
-                "order_id": order_id
-            }
-        )
 
-        db.commit()
+# ============================================
+# ORDER ITEMS
+# ============================================
 
-        return {
-            "success": True,
-            "message": "Order cancelled successfully"
-        }
+@router.post("/order-items")
+def add_order_item(
+    payload: OrderItemCreate,
+    db=Depends(get_db)
+):
 
-    except SQLAlchemyError as e:
+    add_order_item_service(
+        db,
+        payload
+    )
 
-        db.rollback()
+    return {
+        "success": True,
+        "message": "Order item added successfully"
+    }
 
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+
+@router.get("/order-items")
+def get_order_items(
+    db=Depends(get_db)
+):
+
+    items = get_order_items_service(db)
+
+    return {
+        "success": True,
+        "count": len(items),
+        "data": items
+    }
+
+
+@router.get("/orders/{order_id}/items")
+def get_order_items_by_order_id(
+    order_id: int,
+    db=Depends(get_db)
+):
+
+    items = get_order_items_by_order_id_service(
+        db,
+        order_id
+    )
+
+    return {
+        "success": True,
+        "count": len(items),
+        "data": items
+    }
+
+
+@router.get("/order-items/{order_item_id}")
+def get_order_item_by_id(
+    order_item_id: int,
+    db=Depends(get_db)
+):
+
+    item = get_order_item_by_id_service(
+        db,
+        order_item_id
+    )
+
+    return {
+        "success": True,
+        "data": item
+    }
+
+
+@router.put("/order-items/{order_item_id}")
+def update_order_item(
+    order_item_id: int,
+    payload: OrderItemUpdate,
+    db=Depends(get_db)
+):
+
+    update_order_item_service(
+        db,
+        order_item_id,
+        payload
+    )
+
+    return {
+        "success": True,
+        "message": "Order item updated successfully"
+    }
+
+
+@router.delete("/order-items/{order_item_id}")
+def delete_order_item(
+    order_item_id: int,
+    db=Depends(get_db)
+):
+
+    delete_order_item_service(
+        db,
+        order_item_id
+    )
+
+    return {
+        "success": True,
+        "message": "Order item deleted successfully"
+    }

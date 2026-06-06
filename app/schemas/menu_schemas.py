@@ -1,16 +1,44 @@
-from pydantic import BaseModel
 from decimal import Decimal
+
+from pydantic import (
+    BaseModel,
+    Field,
+    ConfigDict
+)
 
 
 class MenuItemCreate(BaseModel):
 
-    category_id: int
-    name: str
-    image_url: str | None = None
-    price: Decimal
-    rating: Decimal = 0
-    description: str | None = None
-    values_text: str | None = None
+    category_id: int = Field(..., gt=0)
+
+    name: str = Field(
+        ...,
+        min_length=2,
+        max_length=150
+    )
+
+    image_url: str | None = Field(
+        None,
+        max_length=500
+    )
+
+    price: Decimal = Field(..., gt=0)
+
+    rating: Decimal = Field(
+        default=0,
+        ge=0,
+        le=5
+    )
+
+    description: str | None = Field(
+        None,
+        max_length=1000
+    )
+
+    values_text: str | None = Field(
+        None,
+        max_length=500
+    )
 
     is_featured: bool = False
     is_top_rated: bool = False
@@ -18,20 +46,8 @@ class MenuItemCreate(BaseModel):
     is_new: bool = False
 
 
-class MenuItemUpdate(BaseModel):
-
-    category_id: int
-    name: str
-    image_url: str | None = None
-    price: Decimal
-    rating: Decimal = 0
-    description: str | None = None
-    values_text: str | None = None
-
-    is_featured: bool = False
-    is_top_rated: bool = False
-    is_recommended: bool = False
-    is_new: bool = False
+class MenuItemUpdate(MenuItemCreate):
+    pass
 
 
 class MenuAvailabilityUpdate(BaseModel):
@@ -41,7 +57,23 @@ class MenuAvailabilityUpdate(BaseModel):
 
 class MenuStatsUpdate(BaseModel):
 
-    rating: Decimal
-    total_reviews: int
-    total_orders: int
-    favorites_count: int
+    rating: Decimal = Field(
+        ...,
+        ge=0,
+        le=5
+    )
+
+    total_reviews: int = Field(
+        ...,
+        ge=0
+    )
+
+    total_orders: int = Field(
+        ...,
+        ge=0
+    )
+
+    favorites_count: int = Field(
+        ...,
+        ge=0
+    )

@@ -1,14 +1,14 @@
-from pydantic import BaseModel
 from typing import Literal
 
+from pydantic import (
+    BaseModel,
+    Field
+)
 
-# ============================================
-# CREATE ORDER
-# ============================================
 
 class OrderCreate(BaseModel):
 
-    customer_id: int
+    customer_id: int = Field(..., gt=0)
 
     order_type: Literal[
         "Dine-In",
@@ -17,13 +17,9 @@ class OrderCreate(BaseModel):
     ]
 
 
-# ============================================
-# UPDATE ORDER
-# ============================================
-
 class OrderUpdate(BaseModel):
 
-    customer_id: int
+    customer_id: int = Field(..., gt=0)
 
     order_type: Literal[
         "Dine-In",
@@ -37,10 +33,6 @@ class OrderUpdate(BaseModel):
         "Cancelled"
     ]
 
-
-# ============================================
-# UPDATE ORDER STATUS
-# ============================================
 
 class OrderStatusUpdate(BaseModel):
 

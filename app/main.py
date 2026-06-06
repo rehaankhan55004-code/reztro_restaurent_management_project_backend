@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import customer , orders ,menu ,menu_category,order_items
+from app.routes import customer , orders ,menu ,menu_category
  
 app = FastAPI()
 
@@ -21,4 +21,3 @@ app.include_router(customer.router)
 app.include_router(orders.router)
 app.include_router(menu.router)
 app.include_router(menu_category.router)
-app.include_router(order_items.router)

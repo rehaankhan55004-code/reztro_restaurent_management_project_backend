@@ -1,6 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
+from fastapi import APIRouter, Depends
 
 from app.db.database import get_db
 
@@ -9,231 +7,129 @@ from app.schemas.menu_category_schemas import (
     MenuCategoryUpdate
 )
 
-router = APIRouter()
+from app.services.menu_category_service import (
+    create_menu_category_service,
+    get_menu_categories_service,
+    get_menu_category_by_id_service,
+    update_menu_category_service,
+    delete_menu_category_service,
+    restore_menu_category_service
+)
+
+router = APIRouter(
+    prefix="/menu-categories",
+    tags=["Menu Categories"]
+)
 
 
 # CREATE CATEGORY
 
-@router.post("/menu-categories")
+@router.post("")
 def create_menu_category(
     payload: MenuCategoryCreate,
     db=Depends(get_db)
 ):
 
-    try:
+    create_menu_category_service(
+        db,
+        payload
+    )
 
-        query = text("""
-            EXEC Reztro.AddMenuCategory
-                @category_name=:category_name
-        """)
-
-        db.execute(
-            query,
-            payload.model_dump()
-        )
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Menu category created successfully"
-        }
-
-    except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return {
+        "success": True,
+        "message": "Menu category created successfully"
+    }
 
 
 # GET ALL CATEGORIES
 
-@router.get("/menu-categories")
+@router.get("")
 def get_menu_categories(
     db=Depends(get_db)
 ):
 
-    try:
+    categories = get_menu_categories_service(db)
 
-        result = db.execute(
-            text("EXEC Reztro.GetMenuCategories")
-        )
-
-        categories = result.mappings().all()
-
-        return {
-            "success": True,
-            "count": len(categories),
-            "data": categories
-        }
-
-    except SQLAlchemyError as e:
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return {
+        "success": True,
+        "count": len(categories),
+        "data": categories
+    }
 
 
 # GET CATEGORY BY ID
 
-@router.get("/menu-categories/{category_id}")
+@router.get("/{category_id}")
 def get_menu_category_by_id(
     category_id: int,
     db=Depends(get_db)
 ):
 
-    try:
+    category = get_menu_category_by_id_service(
+        db,
+        category_id
+    )
 
-        result = db.execute(
-            text("""
-                EXEC Reztro.GetMenuCategoryById
-                    @category_id=:category_id
-            """),
-            {
-                "category_id": category_id
-            }
-        )
-
-        category = result.mappings().first()
-
-        if not category:
-
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Menu category not found"
-            )
-
-        return {
-            "success": True,
-            "data": category
-        }
-
-    except HTTPException as e:
-        raise e
-
-    except SQLAlchemyError as e:
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return {
+        "success": True,
+        "data": category
+    }
 
 
 # UPDATE CATEGORY
 
-@router.put("/menu-categories/{category_id}")
+@router.put("/{category_id}")
 def update_menu_category(
     category_id: int,
     payload: MenuCategoryUpdate,
     db=Depends(get_db)
 ):
 
-    try:
+    update_menu_category_service(
+        db,
+        category_id,
+        payload
+    )
 
-        query = text("""
-            EXEC Reztro.UpdateMenuCategory
-                @category_id=:category_id,
-                @category_name=:category_name
-        """)
-
-        db.execute(
-            query,
-            {
-                "category_id": category_id,
-                "category_name": payload.category_name
-            }
-        )
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Menu category updated successfully"
-        }
-
-    except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return {
+        "success": True,
+        "message": "Menu category updated successfully"
+    }
 
 
 # DELETE CATEGORY
 
-@router.delete("/menu-categories/{category_id}")
+@router.delete("/{category_id}")
 def delete_menu_category(
     category_id: int,
     db=Depends(get_db)
 ):
 
-    try:
+    delete_menu_category_service(
+        db,
+        category_id
+    )
 
-        db.execute(
-            text("""
-                EXEC Reztro.DeleteMenuCategory
-                    @category_id=:category_id
-            """),
-            {
-                "category_id": category_id
-            }
-        )
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Menu category deleted successfully"
-        }
-
-    except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return {
+        "success": True,
+        "message": "Menu category deleted successfully"
+    }
 
 
 # RESTORE CATEGORY
 
-@router.patch("/menu-categories/{category_id}/restore")
+@router.patch("/{category_id}/restore")
 def restore_menu_category(
     category_id: int,
     db=Depends(get_db)
 ):
 
-    try:
+    restore_menu_category_service(
+        db,
+        category_id
+    )
 
-        db.execute(
-            text("""
-                EXEC Reztro.RestoreMenuCategory
-                    @category_id=:category_id
-            """),
-            {
-                "category_id": category_id
-            }
-        )
-
-        db.commit()
-
-        return {
-            "success": True,
-            "message": "Menu category restored successfully"
-        }
-
-    except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
-        )
+    return {
+        "success": True,
+        "message": "Menu category restored successfully"
+    }
