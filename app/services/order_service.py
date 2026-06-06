@@ -16,20 +16,59 @@ def create_order_service(
 
     try:
 
+        # CREATE ORDER
+
         result = db.execute(
             text("""
                 EXEC Reztro.CreateOrder
                     @customer_id=:customer_id,
                     @order_type=:order_type
             """),
-            payload.model_dump()
+            {
+                "customer_id": payload.customer_id,
+                "order_type": payload.order_type
+            }
         )
 
         order = result.mappings().first()
 
+        if not order:
+
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Failed to create order"
+            )
+
+        order_id = order["order_id"]
+
+        # CREATE ORDER ITEMS
+
+        if payload.items:
+
+            for item in payload.items:
+
+                db.execute(
+                    text("""
+                        EXEC Reztro.AddOrderItem
+                            @order_id=:order_id,
+                            @menu_id=:menu_id,
+                            @quantity=:quantity,
+                            @notes=:notes
+                    """),
+                    {
+                        "order_id": order_id,
+                        "menu_id": item.menu_id,
+                        "quantity": item.quantity,
+                        "notes": item.notes
+                    }
+                )
+
         db.commit()
 
         return order
+
+    except HTTPException:
+        raise
 
     except SQLAlchemyError as e:
 

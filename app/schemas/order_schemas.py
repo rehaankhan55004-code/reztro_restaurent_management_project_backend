@@ -6,6 +6,21 @@ from pydantic import (
 )
 
 
+class OrderItemPayload(BaseModel):
+
+    menu_id: int = Field(..., gt=0)
+
+    quantity: int = Field(
+        ...,
+        gt=0
+    )
+
+    notes: str | None = Field(
+        None,
+        max_length=500
+    )
+
+
 class OrderCreate(BaseModel):
 
     customer_id: int = Field(..., gt=0)
@@ -15,6 +30,8 @@ class OrderCreate(BaseModel):
         "Takeaway",
         "Online"
     ]
+
+    items: list[OrderItemPayload] = []
 
 
 class OrderUpdate(BaseModel):
