@@ -11,7 +11,7 @@ from app.schemas.customer_schemas import (
 router = APIRouter()
 
 
-# Add customer
+# ADD CUSTOMER
 
 @router.post("/customers")
 def add_customer(
@@ -20,6 +20,7 @@ def add_customer(
 ):
 
     try:
+
         if len(payload.full_name.strip()) < 3:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -34,18 +35,24 @@ def add_customer(
                 @profile_image_url = :profile_image_url
         """)
 
-        db.execute(query, {
-            "full_name": payload.full_name,
-            "email": payload.email,
-            "phone": payload.phone,
-            "profile_image_url": payload.profile_image_url
-        })
+        result = db.execute(
+            query,
+            {
+                "full_name": payload.full_name,
+                "email": payload.email,
+                "phone": payload.phone,
+                "profile_image_url": payload.profile_image_url
+            }
+        )
+
+        customer = result.mappings().first()
 
         db.commit()
 
         return {
             "success": True,
-            "message": "Customer added successfully"
+            "message": customer["message"],
+            "data": customer
         }
 
     except HTTPException as e:
@@ -56,10 +63,9 @@ def add_customer(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e.orig)
         )
-
 
 # GET ALL CUSTOMERS
 
@@ -87,10 +93,9 @@ def get_customers(
     except SQLAlchemyError as e:
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e.orig)
         )
-
 
 # GET CUSTOMER BY ID
 
@@ -107,9 +112,12 @@ def get_customer_by_id(
                 @customer_id = :customer_id
         """)
 
-        result = db.execute(query, {
-            "customer_id": customer_id
-        })
+        result = db.execute(
+            query,
+            {
+                "customer_id": customer_id
+            }
+        )
 
         customer = result.mappings().first()
 
@@ -130,10 +138,9 @@ def get_customer_by_id(
     except SQLAlchemyError as e:
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e.orig)
         )
-
 
 # UPDATE CUSTOMER
 
@@ -145,8 +152,6 @@ def update_customer(
 ):
 
     try:
-
-        # VALIDATION
 
         if len(payload.full_name.strip()) < 3:
             raise HTTPException(
@@ -163,13 +168,16 @@ def update_customer(
                 @profile_image_url = :profile_image_url
         """)
 
-        db.execute(query, {
-            "customer_id": customer_id,
-            "full_name": payload.full_name,
-            "email": payload.email,
-            "phone": payload.phone,
-            "profile_image_url": payload.profile_image_url
-        })
+        db.execute(
+            query,
+            {
+                "customer_id": customer_id,
+                "full_name": payload.full_name,
+                "email": payload.email,
+                "phone": payload.phone,
+                "profile_image_url": payload.profile_image_url
+            }
+        )
 
         db.commit()
 
@@ -186,10 +194,9 @@ def update_customer(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e.orig)
         )
-
 
 # DELETE CUSTOMER
 
@@ -206,9 +213,12 @@ def delete_customer(
                 @customer_id = :customer_id
         """)
 
-        db.execute(query, {
-            "customer_id": customer_id
-        })
+        db.execute(
+            query,
+            {
+                "customer_id": customer_id
+            }
+        )
 
         db.commit()
 
@@ -222,6 +232,6 @@ def delete_customer(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e)
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e.orig)
         )
