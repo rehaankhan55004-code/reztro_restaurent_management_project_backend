@@ -5,6 +5,7 @@ from fastapi import (
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from datetime import datetime, timedelta
 
 # ORDERS
 
@@ -88,7 +89,7 @@ def create_order_service(
         if (
             payload.order_type == "Takeaway"
             and payload.takeaway_details
-        ):
+            ):
 
             db.execute(
                 text("""
@@ -106,13 +107,24 @@ def create_order_service(
 
         # ONLINE DETAILS
 
-        if (
-            payload.order_type == "Online"
-            and payload.online_details
-        ):
+        from datetime import datetime, timedelta
 
-            db.execute(
-            text("""
+
+# ============================================
+# ONLINE DETAILS
+# ============================================
+
+        if (
+         payload.order_type == "Online"
+         and payload.online_details
+         ):
+
+            estimated_arrival_time = (
+            datetime.now() + timedelta(minutes=30)
+            )
+
+        db.execute(
+        text("""
             EXEC Reztro.AddOnlineOrderDetails
                 @order_id=:order_id,
                 @driver_id=:driver_id,
@@ -124,10 +136,11 @@ def create_order_service(
                 @restaurant_longitude=:restaurant_longitude,
                 @delivery_time=:delivery_time,
                 @estimated_arrival_time=:estimated_arrival_time
-         """),
+            """),
             {
             "order_id": order_id,
-            **payload.online_details.model_dump()
+            **payload.online_details.model_dump(),
+            "estimated_arrival_time": estimated_arrival_time
             }
         )
             

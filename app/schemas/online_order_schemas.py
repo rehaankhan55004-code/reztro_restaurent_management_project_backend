@@ -5,7 +5,6 @@ from pydantic import (
     Field
 )
 
-
 class OnlineOrderCreate(BaseModel):
 
     driver_id: int | None = None
@@ -31,7 +30,6 @@ class OnlineOrderCreate(BaseModel):
 
     delivery_time: datetime | None = None
 
-    estimated_arrival_time: datetime | None = None
 
 
 class OnlineOrderUpdate(BaseModel):
@@ -58,5 +56,3 @@ class OnlineOrderUpdate(BaseModel):
     restaurant_longitude: float | None = None
 
     delivery_time: datetime | None = None
-
-    estimated_arrival_time: datetime | None = None
