@@ -41,7 +41,9 @@ def create_order_service(
 
         order_id = order["order_id"]
 
-        # CREATE ORDER ITEMS
+        # ============================================
+        # ORDER ITEMS
+        # ============================================
 
         if payload.items:
 
@@ -62,6 +64,109 @@ def create_order_service(
                         "notes": item.notes
                     }
                 )
+
+        # ============================================
+        # DINE IN DETAILS
+        # ============================================
+
+        if (
+            payload.order_type == "Dine-In"
+            and payload.dine_in_details
+        ):
+
+            db.execute(
+                text("""
+                    EXEC Reztro.AddDineInOrderDetails
+                        @order_id=:order_id,
+                        @table_no=:table_no,
+                        @guest_count=:guest_count
+                """),
+                {
+                    "order_id": order_id,
+                    "table_no": payload.dine_in_details.table_no,
+                    "guest_count": payload.dine_in_details.guest_count
+                }
+            )
+
+        # ============================================
+        # TAKEAWAY DETAILS
+        # ============================================
+
+        if (
+            payload.order_type == "Takeaway"
+            and payload.takeaway_details
+        ):
+
+            db.execute(
+                text("""
+                    EXEC Reztro.AddTakeawayOrderDetails
+                        @order_id=:order_id,
+                        @pickup_time=:pickup_time,
+                        @pickup_code=:pickup_code
+                """),
+                {
+                    "order_id": order_id,
+                    "pickup_time": payload.takeaway_details.pickup_time,
+                    "pickup_code": payload.takeaway_details.pickup_code
+                }
+            )
+        # ============================================
+        # ONLINE DETAILS
+        # ============================================
+
+        if (
+            payload.order_type == "Online"
+            and payload.online_details
+        ):
+
+            db.execute(
+                text("""
+                    EXEC Reztro.AddOnlineOrderDetails
+                        @order_id=:order_id,
+                        @delivery_address=:delivery_address,
+                        @city=:city,
+                        @state=:state,
+                        @postal_code=:postal_code,
+                        @contact_person=:contact_person,
+                        @contact_phone=:contact_phone,
+                        @contact_email=:contact_email,
+                        @delivery_notes=:delivery_notes
+                """),
+                {
+                    "order_id": order_id,
+                    "delivery_address": payload.online_details.delivery_address,
+                    "city": payload.online_details.city,
+                    "state": payload.online_details.state,
+                    "postal_code": payload.online_details.postal_code,
+                    "contact_person": payload.online_details.contact_person,
+                    "contact_phone": payload.online_details.contact_phone,
+                    "contact_email": payload.online_details.contact_email,
+                    "delivery_notes": payload.online_details.delivery_notes
+                }
+            )
+        # ============================================
+        # PAYMENT
+        # ============================================
+
+        if payload.payment:
+
+            db.execute(
+                text("""
+                    EXEC Reztro.AddPayment
+                        @order_id=:order_id,
+                        @payment_method=:payment_method,
+                        @payment_status=:payment_status,
+                        @paid_amount=:paid_amount,
+                        @transaction_id=:transaction_id
+                """),
+                {
+                    "order_id": order_id,
+                    "payment_method": payload.payment.payment_method,
+                    "payment_status": payload.payment.payment_status,
+                    "paid_amount": payload.payment.paid_amount,
+                    "transaction_id": payload.payment.transaction_id
+                }
+            )
 
         db.commit()
 

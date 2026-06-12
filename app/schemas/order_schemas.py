@@ -5,6 +5,11 @@ from pydantic import (
     Field
 )
 
+from app.schemas.payment_schemas import PaymentCreate
+from app.schemas.dinein_order_schemas import DineInOrderCreate
+from app.schemas.takeaway_order_schemas import TakeawayOrderCreate
+from app.schemas.online_order_schemas import OnlineOrderCreate
+
 
 class OrderItemPayload(BaseModel):
 
@@ -32,6 +37,14 @@ class OrderCreate(BaseModel):
     ]
 
     items: list[OrderItemPayload] = []
+
+    dine_in_details: DineInOrderCreate | None = None
+
+    takeaway_details: TakeawayOrderCreate | None = None
+
+    online_details: OnlineOrderCreate | None = None
+
+    payment: PaymentCreate | None = None
 
 
 class OrderUpdate(BaseModel):
