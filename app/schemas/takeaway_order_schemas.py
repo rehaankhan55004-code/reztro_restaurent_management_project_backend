@@ -8,8 +8,6 @@ from pydantic import (
 
 class TakeawayOrderCreate(BaseModel):
 
-    order_id: int = Field(..., gt=0)
-
     pickup_time: datetime | None = None
 
     pickup_code: str | None = Field(

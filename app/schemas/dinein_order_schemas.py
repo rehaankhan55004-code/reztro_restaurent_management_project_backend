@@ -3,8 +3,6 @@ from pydantic import BaseModel, Field
 
 class DineInOrderCreate(BaseModel):
 
-    order_id: int = Field(..., gt=0)
-
     table_no: str = Field(
         ...,
         min_length=1,

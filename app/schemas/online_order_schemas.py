@@ -1,97 +1,62 @@
+from datetime import datetime
+
 from pydantic import (
     BaseModel,
-    Field,
-    EmailStr
+    Field
 )
 
 
 class OnlineOrderCreate(BaseModel):
 
+    driver_id: int | None = None
+
     delivery_address: str = Field(
         ...,
-        min_length=10,
+        min_length=3,
         max_length=500
     )
 
-    city: str = Field(
-        ...,
-        min_length=2,
-        max_length=100
-    )
+    delivery_latitude: float | None = None
 
-    state: str = Field(
-        ...,
-        min_length=2,
-        max_length=100
-    )
+    delivery_longitude: float | None = None
 
-    postal_code: str = Field(
-        ...,
-        min_length=4,
-        max_length=20
-    )
-
-    contact_person: str = Field(
-        ...,
-        min_length=2,
-        max_length=100
-    )
-
-    contact_phone: str = Field(
-        ...,
-        min_length=10,
-        max_length=20
-    )
-
-    contact_email: EmailStr | None = None
-
-    delivery_notes: str | None = Field(
+    restaurant_address: str | None = Field(
         None,
         max_length=500
     )
+
+    restaurant_latitude: float | None = None
+
+    restaurant_longitude: float | None = None
+
+    delivery_time: datetime | None = None
+
+    estimated_arrival_time: datetime | None = None
 
 
 class OnlineOrderUpdate(BaseModel):
 
+    driver_id: int | None = None
+
     delivery_address: str = Field(
         ...,
-        min_length=10,
+        min_length=3,
         max_length=500
     )
 
-    city: str = Field(
-        ...,
-        min_length=2,
-        max_length=100
-    )
+    delivery_latitude: float | None = None
 
-    state: str = Field(
-        ...,
-        min_length=2,
-        max_length=100
-    )
+    delivery_longitude: float | None = None
 
-    postal_code: str = Field(
-        ...,
-        min_length=4,
-        max_length=20
-    )
-
-    contact_person: str = Field(
-        ...,
-        min_length=2,
-        max_length=100
-    )
-
-    contact_phone: str = Field(
-        ...,
-        min_length=10,
-        max_length=20
-    )
-
-    contact_email: EmailStr | None = None
-
-    delivery_notes: str | None = Field(
+    restaurant_address: str | None = Field(
         None,
         max_length=500
     )
+
+    restaurant_latitude: float | None = None
+
+    restaurant_longitude: float | None = None
+
+    delivery_time: datetime | None = None
+
+    estimated_arrival_time: datetime | None = None

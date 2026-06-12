@@ -6,7 +6,6 @@ from fastapi import (
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-
 # ORDERS
 
 def create_order_service(
@@ -41,9 +40,7 @@ def create_order_service(
 
         order_id = order["order_id"]
 
-        # ============================================
         # ORDER ITEMS
-        # ============================================
 
         if payload.items:
 
@@ -65,9 +62,7 @@ def create_order_service(
                     }
                 )
 
-        # ============================================
         # DINE IN DETAILS
-        # ============================================
 
         if (
             payload.order_type == "Dine-In"
@@ -88,9 +83,7 @@ def create_order_service(
                 }
             )
 
-        # ============================================
         # TAKEAWAY DETAILS
-        # ============================================
 
         if (
             payload.order_type == "Takeaway"
@@ -110,9 +103,8 @@ def create_order_service(
                     "pickup_code": payload.takeaway_details.pickup_code
                 }
             )
-        # ============================================
+
         # ONLINE DETAILS
-        # ============================================
 
         if (
             payload.order_type == "Online"
@@ -120,33 +112,26 @@ def create_order_service(
         ):
 
             db.execute(
-                text("""
-                    EXEC Reztro.AddOnlineOrderDetails
-                        @order_id=:order_id,
-                        @delivery_address=:delivery_address,
-                        @city=:city,
-                        @state=:state,
-                        @postal_code=:postal_code,
-                        @contact_person=:contact_person,
-                        @contact_phone=:contact_phone,
-                        @contact_email=:contact_email,
-                        @delivery_notes=:delivery_notes
-                """),
-                {
-                    "order_id": order_id,
-                    "delivery_address": payload.online_details.delivery_address,
-                    "city": payload.online_details.city,
-                    "state": payload.online_details.state,
-                    "postal_code": payload.online_details.postal_code,
-                    "contact_person": payload.online_details.contact_person,
-                    "contact_phone": payload.online_details.contact_phone,
-                    "contact_email": payload.online_details.contact_email,
-                    "delivery_notes": payload.online_details.delivery_notes
-                }
-            )
-        # ============================================
+            text("""
+            EXEC Reztro.AddOnlineOrderDetails
+                @order_id=:order_id,
+                @driver_id=:driver_id,
+                @delivery_address=:delivery_address,
+                @delivery_latitude=:delivery_latitude,
+                @delivery_longitude=:delivery_longitude,
+                @restaurant_address=:restaurant_address,
+                @restaurant_latitude=:restaurant_latitude,
+                @restaurant_longitude=:restaurant_longitude,
+                @delivery_time=:delivery_time,
+                @estimated_arrival_time=:estimated_arrival_time
+         """),
+            {
+            "order_id": order_id,
+            **payload.online_details.model_dump()
+            }
+        )
+            
         # PAYMENT
-        # ============================================
 
         if payload.payment:
 
