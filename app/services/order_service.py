@@ -91,7 +91,7 @@ def create_order_service(
             and payload.takeaway_details
             ):
 
-            db.execute(
+                db.execute(
                 text("""
                     EXEC Reztro.AddTakeawayOrderDetails
                         @order_id=:order_id,
@@ -105,44 +105,37 @@ def create_order_service(
                 }
             )
 
-        # ONLINE DETAILS
-
-        from datetime import datetime, timedelta
-
-
-# ============================================
 # ONLINE DETAILS
-# ============================================
 
         if (
-         payload.order_type == "Online"
-         and payload.online_details
-         ):
+            payload.order_type == "Online"
+            and payload.online_details
+        ):
 
             estimated_arrival_time = (
-            datetime.now() + timedelta(minutes=30)
+                datetime.now() + timedelta(minutes=30)
             )
 
-        db.execute(
-        text("""
-            EXEC Reztro.AddOnlineOrderDetails
-                @order_id=:order_id,
-                @driver_id=:driver_id,
-                @delivery_address=:delivery_address,
-                @delivery_latitude=:delivery_latitude,
-                @delivery_longitude=:delivery_longitude,
-                @restaurant_address=:restaurant_address,
-                @restaurant_latitude=:restaurant_latitude,
-                @restaurant_longitude=:restaurant_longitude,
-                @delivery_time=:delivery_time,
-                @estimated_arrival_time=:estimated_arrival_time
-            """),
-            {
-            "order_id": order_id,
-            **payload.online_details.model_dump(),
-            "estimated_arrival_time": estimated_arrival_time
-            }
-        )
+            db.execute(
+                text("""
+                    EXEC Reztro.AddOnlineOrderDetails
+                        @order_id=:order_id,
+                        @driver_id=:driver_id,
+                        @delivery_address=:delivery_address,
+                        @delivery_latitude=:delivery_latitude,
+                        @delivery_longitude=:delivery_longitude,
+                        @restaurant_address=:restaurant_address,
+                        @restaurant_latitude=:restaurant_latitude,
+                        @restaurant_longitude=:restaurant_longitude,
+                        @delivery_time=:delivery_time,
+                        @estimated_arrival_time=:estimated_arrival_time
+                """),
+                {
+                    "order_id": order_id,
+                    **payload.online_details.model_dump(),
+                    "estimated_arrival_time": estimated_arrival_time
+                }
+            )
             
         # PAYMENT
 
@@ -337,11 +330,7 @@ def delete_order_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
-
-
-# ============================================
 # ORDER ITEMS
-# ============================================
 
 def add_order_item_service(
     db,

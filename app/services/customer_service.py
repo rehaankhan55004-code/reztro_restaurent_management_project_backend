@@ -13,6 +13,7 @@ def create_customer_service(db, payload):
                     @full_name = :full_name,
                     @email = :email,
                     @phone = :phone,
+                    @address = :address,
                     @profile_image_url = :profile_image_url
             """),
             payload.model_dump()
@@ -104,6 +105,7 @@ def update_customer_service(
                     @full_name = :full_name,
                     @email = :email,
                     @phone = :phone,
+                    @address = :address,
                     @profile_image_url = :profile_image_url
             """),
             {

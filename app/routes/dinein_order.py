@@ -6,7 +6,6 @@ from fastapi import (
 from app.db.database import get_db
 
 from app.schemas.dinein_order_schemas import (
-    DineInOrderCreate,
     DineInOrderUpdate
 )
 
