@@ -173,3 +173,34 @@ def delete_online_order_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
+    
+def assign_driver_service(
+    db,
+    online_id,
+    driver_id
+):
+
+    try:
+
+        db.execute(
+            text("""
+                EXEC Reztro.AssignDriverToOnlineOrder
+                    @online_id=:online_id,
+                    @driver_id=:driver_id
+            """),
+            {
+                "online_id": online_id,
+                "driver_id": driver_id
+            }
+        )
+
+        db.commit()
+
+    except SQLAlchemyError as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e.orig)
+        )

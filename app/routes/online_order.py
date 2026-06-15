@@ -14,7 +14,8 @@ from app.services.online_order_service import (
     get_online_order_by_id_service,
     get_online_order_by_order_id_service,
     update_online_order_service,
-    delete_online_order_service
+    delete_online_order_service,
+    assign_driver_service
 )
 
 router = APIRouter(
@@ -104,4 +105,22 @@ def delete_online_order(
     return {
         "success": True,
         "message": "Online order details deleted successfully"
+    }
+
+@router.patch("/{online_id}/assign-driver/{driver_id}")
+def assign_driver(
+    online_id: int,
+    driver_id: int,
+    db=Depends(get_db)
+):
+
+    assign_driver_service(
+        db,
+        online_id,
+        driver_id
+    )
+
+    return {
+        "success": True,
+        "message": "Driver assigned successfully"
     }

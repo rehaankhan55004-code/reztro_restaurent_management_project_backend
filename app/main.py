@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import customer , orders ,menu ,menu_category,dinein_order,takeaway_order,online_order,payment
+from app.routes import customer , orders ,menu ,menu_category,dinein_order,takeaway_order,online_order,payment,order_tracking,driver_location,driver
  
 app = FastAPI()
 
@@ -25,3 +25,6 @@ app.include_router(dinein_order.router)
 app.include_router(takeaway_order.router)
 app.include_router(online_order.router)
 app.include_router(payment.router)
+app.include_router(driver.router)
+app.include_router(driver_location.router)
+app.include_router(order_tracking.router)

@@ -1,10 +1,9 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, Form
+from sqlalchemy.orm import Session
 
 from app.db.database import get_db
-from app.schemas.customer_schemas import (
-    CustomerCreate,
-    CustomerUpdate
-)
+from app.schemas.customer_schemas import CustomerUpdate
+
 from app.services.customer_service import (
     create_customer_service,
     get_customers_service,
@@ -13,6 +12,9 @@ from app.services.customer_service import (
     delete_customer_service
 )
 
+from app.utils.cloudinary import upload_to_cloudinary
+
+
 router = APIRouter(
     prefix="/customers",
     tags=["Customers"]
@@ -20,27 +22,39 @@ router = APIRouter(
 
 
 @router.post("")
-def create_customer(
-    payload: CustomerCreate,
-    db=Depends(get_db)
+async def create_customer(
+    full_name: str = Form(...),
+    email: str = Form(...),
+    phone: str = Form(...),
+    address: str = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db)
 ):
 
-    customer = create_customer_service(
-        db,
-        payload
-    )
+    profile_image_url = None
+
+    if file:
+        upload_result = upload_to_cloudinary(file)
+        profile_image_url = upload_result["url"]
+
+    payload = {
+        "full_name": full_name,
+        "email": email,
+        "phone": phone,
+        "address": address,
+        "profile_image_url": profile_image_url
+    }
+
+    customer = create_customer_service(db, payload)
 
     return {
         "success": True,
-        "message": customer["message"],
+        "message": "Customer created successfully",
         "data": customer
     }
 
-
 @router.get("")
-def get_customers(
-    db=Depends(get_db)
-):
+def get_customers(db=Depends(get_db)):
 
     customers = get_customers_service(db)
 
@@ -50,17 +64,10 @@ def get_customers(
         "data": customers
     }
 
-
 @router.get("/{customer_id}")
-def get_customer_by_id(
-    customer_id: int,
-    db=Depends(get_db)
-):
+def get_customer_by_id(customer_id: int, db=Depends(get_db)):
 
-    customer = get_customer_by_id_service(
-        db,
-        customer_id
-    )
+    customer = get_customer_by_id_service(db, customer_id)
 
     return {
         "success": True,
@@ -75,11 +82,7 @@ def update_customer(
     db=Depends(get_db)
 ):
 
-    update_customer_service(
-        db,
-        customer_id,
-        payload
-    )
+    update_customer_service(db, customer_id, payload)
 
     return {
         "success": True,
@@ -88,15 +91,9 @@ def update_customer(
 
 
 @router.delete("/{customer_id}")
-def delete_customer(
-    customer_id: int,
-    db=Depends(get_db)
-):
+def delete_customer(customer_id: int, db=Depends(get_db)):
 
-    delete_customer_service(
-        db,
-        customer_id
-    )
+    delete_customer_service(db, customer_id)
 
     return {
         "success": True,

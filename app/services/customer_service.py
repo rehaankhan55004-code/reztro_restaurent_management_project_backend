@@ -1,11 +1,18 @@
 from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
+from app.utils.cloudinary import upload_to_cloudinary
 
 
-def create_customer_service(db, payload):
+def create_customer_service(db, payload, file=None):
 
     try:
+
+        profile_image_url = None
+
+        if file:
+            upload_result = upload_to_cloudinary(file)
+            profile_image_url = upload_result["url"]
 
         result = db.execute(
             text("""
@@ -16,7 +23,10 @@ def create_customer_service(db, payload):
                     @address = :address,
                     @profile_image_url = :profile_image_url
             """),
-            payload.model_dump()
+            {
+                **payload.model_dump(),
+                "profile_image_url": profile_image_url
+            }
         )
 
         customer = result.mappings().first()
@@ -26,14 +36,11 @@ def create_customer_service(db, payload):
         return customer
 
     except SQLAlchemyError as e:
-
         db.rollback()
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
-
 
 def get_customers_service(db):
 

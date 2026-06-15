@@ -117,26 +117,26 @@ def create_order_service(
             )
 
             db.execute(
-                text("""
-                    EXEC Reztro.AddOnlineOrderDetails
-                        @order_id=:order_id,
-                        @driver_id=:driver_id,
-                        @delivery_address=:delivery_address,
-                        @delivery_latitude=:delivery_latitude,
-                        @delivery_longitude=:delivery_longitude,
-                        @restaurant_address=:restaurant_address,
-                        @restaurant_latitude=:restaurant_latitude,
-                        @restaurant_longitude=:restaurant_longitude,
-                        @delivery_time=:delivery_time,
-                        @estimated_arrival_time=:estimated_arrival_time
-                """),
-                {
-                    "order_id": order_id,
-                    **payload.online_details.model_dump(),
-                    "estimated_arrival_time": estimated_arrival_time
-                }
+            text("""
+                EXEC Reztro.AddOnlineOrderDetails
+                    @order_id=:order_id,
+                    @driver_id=:driver_id,
+                    @delivery_address=:delivery_address,
+                    @delivery_latitude=:delivery_latitude,
+                    @delivery_longitude=:delivery_longitude,
+                    @restaurant_address=:restaurant_address,
+                    @restaurant_latitude=:restaurant_latitude,
+                    @restaurant_longitude=:restaurant_longitude,
+                    @delivery_time=:delivery_time,
+                    @estimated_arrival_time=:estimated_arrival_time
+            """),
+            {
+                "order_id": order_id,
+                **payload.online_details.model_dump(),
+                "estimated_arrival_time": estimated_arrival_time
+            }
             )
-            
+    
         # PAYMENT
 
         if payload.payment:
@@ -281,15 +281,65 @@ def update_order_status_service(
 
         db.execute(
             text("""
-                EXEC Reztro.UpdateOrderStatus
+                EXEC Reztro.UpdateOrderStatusWithTracking
                     @order_id=:order_id,
-                    @order_status=:order_status
+                    @order_status=:order_status,
+                    @tracking_note=:tracking_note
             """),
             {
                 "order_id": order_id,
-                "order_status": payload.order_status
+                "order_status": payload.order_status,
+                "tracking_note": payload.tracking_note
             }
         )
+
+        # RELEASE RESOURCES WHEN ORDER IS COMPLETED/CANCELLED
+
+        if payload.order_status in [
+            "Completed",
+            "Cancelled"
+        ]:
+
+            # RELEASE DRIVER (ONLINE ORDER)
+
+            result = db.execute(
+                text("""
+                    EXEC Reztro.GetOnlineOrderDetailsByOrderId
+                        @order_id=:order_id
+                """),
+                {
+                    "order_id": order_id
+                }
+            )
+
+            online_order = result.mappings().first()
+
+            if (
+                online_order
+                and online_order["driver_id"]
+            ):
+
+                db.execute(
+                    text("""
+                        EXEC Reztro.ReleaseDriverFromOnlineOrder
+                            @driver_id=:driver_id
+                    """),
+                    {
+                        "driver_id": online_order["driver_id"]
+                    }
+                )
+
+            # RELEASE TABLE (DINE-IN ORDER)
+
+            db.execute(
+                text("""
+                    EXEC Reztro.ReleaseDineInTable
+                        @order_id=:order_id
+                """),
+                {
+                    "order_id": order_id
+                }
+            )
 
         db.commit()
 
@@ -301,8 +351,7 @@ def update_order_status_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
-
-
+    
 def delete_order_service(
     db,
     order_id

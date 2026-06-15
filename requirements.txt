@@ -5,3 +5,6 @@ pydantic
 python-dotenv
 pyodbc
 pydantic[email]
+cloudinary 
+python-multipart
+pydantic_settings
