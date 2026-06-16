@@ -23,10 +23,7 @@ router = APIRouter(
     tags=["Driver Locations"]
 )
 
-
-# ============================================
 # CREATE DRIVER LOCATION
-# ============================================
 
 @router.post("")
 def create_driver_location(
@@ -45,10 +42,7 @@ def create_driver_location(
         "data": location
     }
 
-
-# ============================================
 # GET ALL DRIVER LOCATIONS
-# ============================================
 
 @router.get("")
 def get_driver_locations(
@@ -64,9 +58,7 @@ def get_driver_locations(
     }
 
 
-# ============================================
 # GET DRIVER LOCATION HISTORY
-# ============================================
 
 @router.get("/driver/{driver_id}/history")
 def get_driver_location_history(
@@ -86,9 +78,7 @@ def get_driver_location_history(
     }
 
 
-# ============================================
 # GET LATEST LOCATION OF A DRIVER
-# ============================================
 
 @router.get("/driver/{driver_id}/latest")
 def get_latest_driver_location(
