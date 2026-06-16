@@ -8,7 +8,7 @@ from app.schemas.order_tracking_schemas import (
     OrderStatusTrackingUpdate
 )
 
-from services.order_tracking_service import (
+from app.services.order_tracking_service import (
     add_order_tracking_service,
     get_order_tracking_service,
     get_order_tracking_by_order_id_service,
