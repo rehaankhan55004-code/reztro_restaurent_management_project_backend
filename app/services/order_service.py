@@ -13,11 +13,11 @@ def create_order_service(
     db,
     payload
 ):
-
+ 
     try:
-
+ 
         # CREATE ORDER
-
+ 
         result = db.execute(
             text("""
                 EXEC Reztro.CreateOrder
@@ -29,24 +29,44 @@ def create_order_service(
                 "order_type": payload.order_type
             }
         )
-
+ 
         order = result.mappings().first()
-
+ 
         if not order:
-
+ 
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Failed to create order"
             )
-
+ 
         order_id = order["order_id"]
-
+ 
+        # INITIAL ORDER TRACKING FOR ONLINE ORDER
+ 
+        if payload.order_type == "Online":
+ 
+            db.execute(
+                text("""
+                    EXEC Reztro.AddOrderTracking
+                        @order_id=:order_id,
+                        @tracking_status=:tracking_status,
+                        @tracking_note=:tracking_note,
+                        @sort_order=:sort_order
+                """),
+                {
+                    "order_id": order_id,
+                    "tracking_status": "Order Placed",
+                    "tracking_note": "Order has been placed successfully",
+                    "sort_order": 1
+                }
+            )
+ 
         # ORDER ITEMS
-
+ 
         if payload.items:
-
+ 
             for item in payload.items:
-
+ 
                 db.execute(
                     text("""
                         EXEC Reztro.AddOrderItem
@@ -62,14 +82,14 @@ def create_order_service(
                         "notes": item.notes
                     }
                 )
-
+ 
         # DINE IN DETAILS
-
+ 
         if (
             payload.order_type == "Dine-In"
             and payload.dine_in_details
         ):
-
+ 
             db.execute(
                 text("""
                     EXEC Reztro.AddDineInOrderDetails
@@ -83,15 +103,15 @@ def create_order_service(
                     "guest_count": payload.dine_in_details.guest_count
                 }
             )
-
+ 
         # TAKEAWAY DETAILS
-
+ 
         if (
             payload.order_type == "Takeaway"
             and payload.takeaway_details
-            ):
-
-                db.execute(
+        ):
+ 
+            db.execute(
                 text("""
                     EXEC Reztro.AddTakeawayOrderDetails
                         @order_id=:order_id,
@@ -104,43 +124,43 @@ def create_order_service(
                     "pickup_code": payload.takeaway_details.pickup_code
                 }
             )
-
-# ONLINE DETAILS
-
+ 
+        # ONLINE DETAILS
+ 
         if (
             payload.order_type == "Online"
             and payload.online_details
         ):
-
+ 
             estimated_arrival_time = (
                 datetime.now() + timedelta(minutes=30)
             )
-
+ 
             db.execute(
-            text("""
-                EXEC Reztro.AddOnlineOrderDetails
-                    @order_id=:order_id,
-                    @driver_id=:driver_id,
-                    @delivery_address=:delivery_address,
-                    @delivery_latitude=:delivery_latitude,
-                    @delivery_longitude=:delivery_longitude,
-                    @restaurant_address=:restaurant_address,
-                    @restaurant_latitude=:restaurant_latitude,
-                    @restaurant_longitude=:restaurant_longitude,
-                    @delivery_time=:delivery_time,
-                    @estimated_arrival_time=:estimated_arrival_time
-            """),
-            {
-                "order_id": order_id,
-                **payload.online_details.model_dump(),
-                "estimated_arrival_time": estimated_arrival_time
-            }
+                text("""
+                    EXEC Reztro.AddOnlineOrderDetails
+                        @order_id=:order_id,
+                        @driver_id=:driver_id,
+                        @delivery_address=:delivery_address,
+                        @delivery_latitude=:delivery_latitude,
+                        @delivery_longitude=:delivery_longitude,
+                        @restaurant_address=:restaurant_address,
+                        @restaurant_latitude=:restaurant_latitude,
+                        @restaurant_longitude=:restaurant_longitude,
+                        @delivery_time=:delivery_time,
+                        @estimated_arrival_time=:estimated_arrival_time
+                """),
+                {
+                    "order_id": order_id,
+                    **payload.online_details.model_dump(),
+                    "estimated_arrival_time": estimated_arrival_time
+                }
             )
-    
+ 
         # PAYMENT
-
+ 
         if payload.payment:
-
+ 
             db.execute(
                 text("""
                     EXEC Reztro.AddPayment
@@ -158,18 +178,18 @@ def create_order_service(
                     "transaction_id": payload.payment.transaction_id
                 }
             )
-
+ 
         db.commit()
-
+ 
         return order
-
+ 
     except HTTPException:
         raise
-
+ 
     except SQLAlchemyError as e:
-
+ 
         db.rollback()
-
+ 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)

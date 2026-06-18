@@ -72,9 +72,7 @@ def get_order_tracking_by_order_id_service(
     db,
     order_id
 ):
-
     try:
-
         result = db.execute(
             text("""
                 EXEC Reztro.GetOrderTrackingByOrderId
@@ -84,16 +82,26 @@ def get_order_tracking_by_order_id_service(
                 "order_id": order_id
             }
         )
-
-        return result.mappings().all()
-
+ 
+        tracking = result.mappings().all()
+ 
+        if not tracking:
+            return []
+ 
+        return [dict(row) for row in tracking]
+ 
     except SQLAlchemyError as e:
-
+        db.rollback()
+ 
+        error_message = str(e.orig)
+ 
+        if "No active tracking records found" in error_message:
+            return []
+ 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            detail=error_message
         )
-
 
 # GET LATEST TRACKING
 
