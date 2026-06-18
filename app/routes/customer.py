@@ -47,6 +47,11 @@ async def create_customer(
 
     customer = create_customer_service(db, payload)
 
+    print("FULL NAME:", full_name)
+    print("EMAIL:", email)
+    print("PHONE:", phone)
+    print("ADDRESS:", address)
+    print("FILE:", file.filename if file else None)
     return {
         "success": True,
         "message": "Customer created successfully",

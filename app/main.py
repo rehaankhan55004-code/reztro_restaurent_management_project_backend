@@ -1,17 +1,13 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from app.routes import customer , orders ,menu ,menu_category,dinein_order,takeaway_order,online_order,payment,order_tracking,driver_location,driver
+from app.routes import customer , orders ,menu ,menu_category,dinein_order,takeaway_order,online_order,payment,order_tracking,driver_location,driver,promotion
  
 app = FastAPI()
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "https://h9jwsdktqe.ap-south-1.awsapprunner.com/"
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,3 +24,4 @@ app.include_router(payment.router)
 app.include_router(driver.router)
 app.include_router(driver_location.router)
 app.include_router(order_tracking.router)
+app.include_router(promotion.router)

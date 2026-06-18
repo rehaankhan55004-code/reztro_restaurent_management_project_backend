@@ -562,3 +562,34 @@ def delete_order_item_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
+
+def apply_promotion_service(
+    db,
+    payload
+):
+
+    try:
+
+        result = db.execute(
+            text("""
+                EXEC Reztro.ApplyPromotionToOrder
+                    @order_id=:order_id,
+                    @promotion_code=:promotion_code
+            """),
+            payload.model_dump()
+        )
+
+        promotion = result.mappings().first()
+
+        db.commit()
+
+        return promotion
+
+    except SQLAlchemyError as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e.orig)
+        )

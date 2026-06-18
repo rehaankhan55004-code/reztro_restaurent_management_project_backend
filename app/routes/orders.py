@@ -5,7 +5,8 @@ from app.db.database import get_db
 from app.schemas.order_schemas import (
     OrderCreate,
     OrderUpdate,
-    OrderStatusUpdate
+    OrderStatusUpdate,
+    ApplyPromotionRequest
 )
 
 from app.schemas.order_item_schemas import (
@@ -20,13 +21,15 @@ from app.services.order_service import (
     update_order_service,
     update_order_status_service,
     delete_order_service,
+    
 
     add_order_item_service,
     get_order_items_service,
     get_order_items_by_order_id_service,
     get_order_item_by_id_service,
     update_order_item_service,
-    delete_order_item_service
+    delete_order_item_service,
+    apply_promotion_service
 )
 
 router = APIRouter(
@@ -139,9 +142,7 @@ def delete_order(
     }
 
 
-# ============================================
 # ORDER ITEMS
-# ============================================
 
 @router.post("/order-items")
 def add_order_item(
@@ -242,4 +243,21 @@ def delete_order_item(
     return {
         "success": True,
         "message": "Order item deleted successfully"
+    }
+
+@router.post("/orders/apply-promotion")
+def apply_promotion(
+    payload: ApplyPromotionRequest,
+    db=Depends(get_db)
+):
+
+    result = apply_promotion_service(
+        db,
+        payload
+    )
+
+    return {
+        "success": True,
+        "message": "Promotion applied successfully",
+        "data": result
     }

@@ -71,3 +71,18 @@ class OrderStatusUpdate(BaseModel):
         "Completed",
         "Cancelled"
     ]
+    tracking_note: str | None = None
+
+
+class ApplyPromotionRequest(BaseModel):
+
+    order_id: int = Field(
+        ...,
+        gt=0
+    )
+
+    promotion_code: str = Field(
+        ...,
+        min_length=1,
+        max_length=50
+    )
