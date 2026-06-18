@@ -1,19 +1,12 @@
 from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
-from app.utils.cloudinary import upload_to_cloudinary
+
+from app.schemas.customer_schemas import CustomerCreate, CustomerUpdate
 
 
-def create_customer_service(db, payload, file=None):
-
+def create_customer_service(db, payload: CustomerCreate):
     try:
-
-        profile_image_url = None
-
-        if file:
-            upload_result = upload_to_cloudinary(file)
-            profile_image_url = upload_result["url"]
-
         result = db.execute(
             text("""
                 EXEC Reztro.AddCustomer
@@ -23,16 +16,11 @@ def create_customer_service(db, payload, file=None):
                     @address = :address,
                     @profile_image_url = :profile_image_url
             """),
-            {
-                **payload.model_dump(),
-                "profile_image_url": profile_image_url
-            }
+            payload.model_dump()
         )
 
         customer = result.mappings().first()
-
         db.commit()
-
         return customer
 
     except SQLAlchemyError as e:
@@ -42,20 +30,16 @@ def create_customer_service(db, payload, file=None):
             detail=str(e.orig)
         )
 
+
 def get_customers_service(db):
-
     try:
-
         result = db.execute(
-            text("""
-                EXEC Reztro.GetCustomers
-            """)
+            text("EXEC Reztro.GetCustomers")
         )
 
         return result.mappings().all()
 
     except SQLAlchemyError as e:
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
@@ -63,17 +47,13 @@ def get_customers_service(db):
 
 
 def get_customer_by_id_service(db, customer_id: int):
-
     try:
-
         result = db.execute(
             text("""
                 EXEC Reztro.GetCustomerById
                     @customer_id = :customer_id
             """),
-            {
-                "customer_id": customer_id
-            }
+            {"customer_id": customer_id}
         )
 
         customer = result.mappings().first()
@@ -88,23 +68,15 @@ def get_customer_by_id_service(db, customer_id: int):
 
     except HTTPException:
         raise
-
     except SQLAlchemyError as e:
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-def update_customer_service(
-    db,
-    customer_id: int,
-    payload
-):
-
+def update_customer_service(db, customer_id: int, payload: CustomerUpdate):
     try:
-
         db.execute(
             text("""
                 EXEC Reztro.UpdateCustomer
@@ -124,38 +96,27 @@ def update_customer_service(
         db.commit()
 
     except SQLAlchemyError as e:
-
         db.rollback()
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-def delete_customer_service(
-    db,
-    customer_id: int
-):
-
+def delete_customer_service(db, customer_id: int):
     try:
-
         db.execute(
             text("""
                 EXEC Reztro.DeleteCustomer
                     @customer_id = :customer_id
             """),
-            {
-                "customer_id": customer_id
-            }
+            {"customer_id": customer_id}
         )
 
         db.commit()
 
     except SQLAlchemyError as e:
-
         db.rollback()
-
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
