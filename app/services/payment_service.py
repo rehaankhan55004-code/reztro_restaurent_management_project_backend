@@ -6,9 +6,7 @@ from fastapi import (
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
-# ============================================
 # GET ALL PAYMENTS
-# ============================================
 
 def get_payments_service(
     db
@@ -30,9 +28,7 @@ def get_payments_service(
         )
 
 
-# ============================================
 # GET PAYMENT BY ID
-# ============================================
 
 def get_payment_by_id_service(
     db,
@@ -73,9 +69,7 @@ def get_payment_by_id_service(
         )
 
 
-# ============================================
 # GET PAYMENT BY ORDER ID
-# ============================================
 
 def get_payment_by_order_id_service(
     db,
@@ -116,9 +110,7 @@ def get_payment_by_order_id_service(
         )
 
 
-# ============================================
 # UPDATE PAYMENT
-# ============================================
 
 def update_payment_service(
     db,
@@ -169,9 +161,7 @@ def update_payment_service(
         )
 
 
-# ============================================
 # UPDATE PAYMENT STATUS
-# ============================================
 
 def update_payment_status_service(
     db,
@@ -219,10 +209,7 @@ def update_payment_status_service(
             detail=str(e.orig)
         )
 
-
-# ============================================
 # DELETE PAYMENT
-# ============================================
 
 def delete_payment_service(
     db,

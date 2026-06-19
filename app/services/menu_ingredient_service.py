@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 
-# 🔹 CREATE
+#  CREATE
 def create_menu_ingredient_service(db, payload):
     try:
         result = db.execute(
@@ -15,19 +15,16 @@ def create_menu_ingredient_service(db, payload):
             payload.model_dump()
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-# 🔹 GET ALL
+#  GET ALL
 def get_menu_ingredients_service(db):
     try:
         result = db.execute(
@@ -45,7 +42,7 @@ def get_menu_ingredients_service(db):
         )
 
 
-# 🔹 GET BY ID
+#  GET BY ID
 def get_menu_ingredient_by_id_service(db, ingredient_id: int):
     try:
         result = db.execute(
@@ -78,7 +75,7 @@ def get_menu_ingredient_by_id_service(db, ingredient_id: int):
         )
 
 
-# 🔹 GET BY MENU ID
+#  GET BY MENU ID
 def get_menu_ingredients_by_menu_id_service(db, payload):
     try:
         result = db.execute(
@@ -98,7 +95,7 @@ def get_menu_ingredients_by_menu_id_service(db, payload):
         )
 
 
-# 🔹 UPDATE
+#  UPDATE
 def update_menu_ingredient_service(db, ingredient_id: int, payload):
     try:
         params = payload.model_dump()
@@ -113,19 +110,16 @@ def update_menu_ingredient_service(db, ingredient_id: int, payload):
             params
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-# 🔹 DELETE BY ID
+#  DELETE BY ID
 def delete_menu_ingredient_service(db, ingredient_id: int):
     try:
         result = db.execute(
@@ -138,19 +132,16 @@ def delete_menu_ingredient_service(db, ingredient_id: int):
             }
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-# 🔹 DELETE BY MENU ID
+#  DELETE BY MENU ID
 def delete_menu_ingredients_by_menu_id_service(db, payload):
     try:
         result = db.execute(
@@ -161,12 +152,9 @@ def delete_menu_ingredients_by_menu_id_service(db, payload):
             payload.model_dump()
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)

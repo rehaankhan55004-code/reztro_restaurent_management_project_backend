@@ -4,7 +4,6 @@ from sqlalchemy.exc import SQLAlchemyError
 
 from app.schemas.customer_schemas import CustomerCreate, CustomerUpdate
 
-
 def create_customer_service(db, payload: CustomerCreate):
     try:
         result = db.execute(
@@ -77,6 +76,11 @@ def get_customer_by_id_service(db, customer_id: int):
 
 def update_customer_service(db, customer_id: int, payload: CustomerUpdate):
     try:
+        data = payload.model_dump()
+
+        if data.get("profile_image_url") is None:
+            data.pop("profile_image_url")
+
         db.execute(
             text("""
                 EXEC Reztro.UpdateCustomer
@@ -89,7 +93,7 @@ def update_customer_service(db, customer_id: int, payload: CustomerUpdate):
             """),
             {
                 "customer_id": customer_id,
-                **payload.model_dump()
+                **data
             }
         )
 

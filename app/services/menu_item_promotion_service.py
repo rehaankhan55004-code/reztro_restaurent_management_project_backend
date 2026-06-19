@@ -4,8 +4,8 @@ from sqlalchemy.exc import SQLAlchemyError
 
 
 def add_menu_item_promotion_service(db, payload):
-
     try:
+        data = payload if isinstance(payload, dict) else payload.model_dump()
 
         result = db.execute(
             text("""
@@ -13,20 +13,15 @@ def add_menu_item_promotion_service(db, payload):
                     @menu_id = :menu_id,
                     @promotion_id = :promotion_id
             """),
-            payload.model_dump()
+            data
         )
 
         response = result.mappings().first()
 
-        db.commit()
-
-        return response
+        return response  
 
     except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
+        raise HTTPException(  
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
@@ -89,8 +84,8 @@ def get_menu_items_by_promotion_id_service(db, promotion_id):
 
 
 def remove_menu_item_promotion_service(db, payload):
-
     try:
+        data = payload if isinstance(payload, dict) else payload.model_dump()
 
         result = db.execute(
             text("""
@@ -98,29 +93,22 @@ def remove_menu_item_promotion_service(db, payload):
                     @menu_id = :menu_id,
                     @promotion_id = :promotion_id
             """),
-            payload.model_dump()
+            data
         )
 
         response = result.mappings().first()
 
-        db.commit()
-
-        return response
+        return response  
 
     except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
+        raise HTTPException(  
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
 def remove_all_promotions_from_menu_item_service(db, menu_id):
-
     try:
-
         result = db.execute(
             text("""
                 EXEC Reztro.RemoveAllPromotionsFromMenuItem
@@ -133,24 +121,17 @@ def remove_all_promotions_from_menu_item_service(db, menu_id):
 
         response = result.mappings().first()
 
-        db.commit()
-
-        return response
+        return response  
 
     except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
+        raise HTTPException( 
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
 def remove_promotion_from_all_menu_items_service(db, promotion_id):
-
     try:
-
         result = db.execute(
             text("""
                 EXEC Reztro.RemovePromotionFromAllMenuItems
@@ -163,15 +144,10 @@ def remove_promotion_from_all_menu_items_service(db, promotion_id):
 
         response = result.mappings().first()
 
-        db.commit()
-
-        return response
+        return response  
 
     except SQLAlchemyError as e:
-
-        db.rollback()
-
-        raise HTTPException(
+        raise HTTPException(  
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )

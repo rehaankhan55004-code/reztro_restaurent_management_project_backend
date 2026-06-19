@@ -4,9 +4,7 @@ from app.db.database import get_db
 
 from app.schemas.menu_ingredient_schemas import (
     MenuIngredientCreate,
-    MenuIngredientUpdate,
-    GetMenuIngredientsByMenuIdRequest,
-    DeleteMenuIngredientsByMenuIdRequest
+    MenuIngredientUpdate
 )
 
 from app.services.menu_ingredient_service import (
@@ -26,10 +24,9 @@ router = APIRouter(
 )
 
 
-# 🔹 CREATE
+#  CREATE
 @router.post("")
 def create_menu_ingredient(payload: MenuIngredientCreate, db=Depends(get_db)):
-
     data = create_menu_ingredient_service(db, payload)
 
     return {
@@ -39,10 +36,9 @@ def create_menu_ingredient(payload: MenuIngredientCreate, db=Depends(get_db)):
     }
 
 
-# 🔹 GET ALL
+#  GET ALL
 @router.get("")
 def get_menu_ingredients(db=Depends(get_db)):
-
     items = get_menu_ingredients_service(db)
 
     return {
@@ -52,10 +48,9 @@ def get_menu_ingredients(db=Depends(get_db)):
     }
 
 
-# 🔹 GET BY ID
+#  GET BY ID
 @router.get("/{ingredient_id}")
 def get_menu_ingredient_by_id(ingredient_id: int, db=Depends(get_db)):
-
     item = get_menu_ingredient_by_id_service(db, ingredient_id)
 
     return {
@@ -64,14 +59,13 @@ def get_menu_ingredient_by_id(ingredient_id: int, db=Depends(get_db)):
     }
 
 
-# 🔹 GET BY MENU ID
-@router.post("/by-menu-id")
-def get_menu_ingredients_by_menu_id(
-    payload: GetMenuIngredientsByMenuIdRequest,
-    db=Depends(get_db)
-):
-
-    items = get_menu_ingredients_by_menu_id_service(db, payload)
+#  GET BY MENU ID 
+@router.get("/menu/{menu_id}")
+def get_menu_ingredients_by_menu_id(menu_id: int, db=Depends(get_db)):
+    items = get_menu_ingredients_by_menu_id_service(
+        db,
+        {"menu_id": menu_id}
+    )
 
     return {
         "success": True,
@@ -80,14 +74,13 @@ def get_menu_ingredients_by_menu_id(
     }
 
 
-# 🔹 UPDATE
+#  UPDATE
 @router.put("/{ingredient_id}")
 def update_menu_ingredient(
     ingredient_id: int,
     payload: MenuIngredientUpdate,
     db=Depends(get_db)
 ):
-
     data = update_menu_ingredient_service(db, ingredient_id, payload)
 
     return {
@@ -97,10 +90,9 @@ def update_menu_ingredient(
     }
 
 
-# 🔹 DELETE BY ID
+#  DELETE BY ID
 @router.delete("/{ingredient_id}")
 def delete_menu_ingredient(ingredient_id: int, db=Depends(get_db)):
-
     data = delete_menu_ingredient_service(db, ingredient_id)
 
     return {
@@ -110,14 +102,13 @@ def delete_menu_ingredient(ingredient_id: int, db=Depends(get_db)):
     }
 
 
-# 🔹 DELETE BY MENU ID
-@router.delete("/by-menu-id")
-def delete_menu_ingredients_by_menu_id(
-    payload: DeleteMenuIngredientsByMenuIdRequest,
-    db=Depends(get_db)
-):
-
-    data = delete_menu_ingredients_by_menu_id_service(db, payload)
+#  DELETE BY MENU ID 
+@router.delete("/menu/{menu_id}")
+def delete_menu_ingredients_by_menu_id(menu_id: int, db=Depends(get_db)):
+    data = delete_menu_ingredients_by_menu_id_service(
+        db,
+        {"menu_id": menu_id}
+    )
 
     return {
         "success": True,

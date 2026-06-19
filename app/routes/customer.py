@@ -54,7 +54,7 @@ async def create_customer(
 
 
 @router.get("")
-def get_customers(db: Session = Depends(get_db)):  # ✅ added Session type
+def get_customers(db: Session = Depends(get_db)):  
     customers = get_customers_service(db)
 
     return {
@@ -65,7 +65,7 @@ def get_customers(db: Session = Depends(get_db)):  # ✅ added Session type
 
 
 @router.get("/{customer_id}")
-def get_customer_by_id(customer_id: int, db: Session = Depends(get_db)):  # ✅ added Session type
+def get_customer_by_id(customer_id: int, db: Session = Depends(get_db)):  
     customer = get_customer_by_id_service(db, customer_id)
 
     return {
@@ -75,11 +75,29 @@ def get_customer_by_id(customer_id: int, db: Session = Depends(get_db)):  # ✅ 
 
 
 @router.put("/{customer_id}")
-def update_customer(
+async def update_customer(
     customer_id: int,
-    payload: CustomerUpdate,
-    db: Session = Depends(get_db)  # ✅ added Session type
+    full_name: str = Form(...),
+    email: str = Form(None),
+    phone: str = Form(None),
+    address: str = Form(None),
+    file: UploadFile = File(None),
+    db: Session = Depends(get_db)
 ):
+    profile_image_url = None
+
+    if file:
+        upload_result = upload_to_cloudinary(file)
+        profile_image_url = upload_result["url"]
+
+    payload = CustomerUpdate(
+        full_name=full_name,
+        email=email,
+        phone=phone,
+        address=address,
+        profile_image_url=profile_image_url
+    )
+
     update_customer_service(db, customer_id, payload)
 
     return {
@@ -89,7 +107,7 @@ def update_customer(
 
 
 @router.delete("/{customer_id}")
-def delete_customer(customer_id: int, db: Session = Depends(get_db)):  # ✅ added Session type
+def delete_customer(customer_id: int, db: Session = Depends(get_db)):  
     delete_customer_service(db, customer_id)
 
     return {

@@ -20,6 +20,9 @@ from app.routes import (
     meal_time,
     menu_ingredient,
     menu_nutrition,
+    review,
+    activity_log,
+    purchase_order
 )
 from app.utils import cloudinary as cloudinary_router  
 
@@ -52,4 +55,7 @@ app.include_router(meal_time.router)
 app.include_router(menu_item_meal_time.router)
 app.include_router(menu_ingredient.router)
 app.include_router(menu_nutrition.router)
+app.include_router(review.router)
+app.include_router(activity_log.router)
+app.include_router(purchase_order.router)
 app.include_router(cloudinary_router.router)  

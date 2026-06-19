@@ -3,7 +3,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 
-# 🔹 ADD
+#  ADD
 def add_menu_item_meal_time_service(db, payload):
     try:
         result = db.execute(
@@ -15,19 +15,16 @@ def add_menu_item_meal_time_service(db, payload):
             payload.model_dump()
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-# 🔹 GET ALL
+#  GET ALL
 def get_menu_item_meal_times_service(db):
     try:
         result = db.execute(
@@ -45,7 +42,7 @@ def get_menu_item_meal_times_service(db):
         )
 
 
-# 🔹 GET BY MENU ID
+#  GET BY MENU ID
 def get_meal_times_by_menu_id_service(db, payload):
     try:
         result = db.execute(
@@ -65,7 +62,7 @@ def get_meal_times_by_menu_id_service(db, payload):
         )
 
 
-# 🔹 GET BY MEAL TIME ID
+#  GET BY MEAL TIME ID
 def get_menu_items_by_meal_time_id_service(db, payload):
     try:
         result = db.execute(
@@ -85,7 +82,7 @@ def get_menu_items_by_meal_time_id_service(db, payload):
         )
 
 
-# 🔹 REMOVE SINGLE
+#  REMOVE SINGLE
 def remove_menu_item_meal_time_service(db, payload):
     try:
         result = db.execute(
@@ -97,19 +94,16 @@ def remove_menu_item_meal_time_service(db, payload):
             payload.model_dump()
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-# 🔹 REMOVE ALL FROM MENU
+#  REMOVE ALL FROM MENU
 def remove_all_meal_times_from_menu_item_service(db, payload):
     try:
         result = db.execute(
@@ -120,19 +114,16 @@ def remove_all_meal_times_from_menu_item_service(db, payload):
             payload.model_dump()
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
 
 
-# 🔹 REMOVE MEAL TIME FROM ALL MENUS
+#  REMOVE MEAL TIME FROM ALL MENUS
 def remove_meal_time_from_all_menu_items_service(db, payload):
     try:
         result = db.execute(
@@ -143,12 +134,9 @@ def remove_meal_time_from_all_menu_items_service(db, payload):
             payload.model_dump()
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)

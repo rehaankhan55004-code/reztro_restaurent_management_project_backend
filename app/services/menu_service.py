@@ -4,14 +4,41 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 
-def create_menu_item_service(
-    db,
-    payload
-):
+from fastapi import HTTPException, status
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
+from app.services.menu_nutrition_service import (
+    add_menu_nutrition_service,
+    update_menu_nutrition_by_menu_id_service,
+    delete_menu_nutrition_by_menu_id_service
+)
+
+from app.services.menu_ingredient_service import (
+    create_menu_ingredient_service,
+    delete_menu_ingredients_by_menu_id_service
+)
+
+from app.services.menu_item_tag_service import (
+    add_menu_item_tag_service,
+    remove_all_tags_from_menu_item_service
+)
+
+from app.services.menu_item_promotion_service import (
+    add_menu_item_promotion_service,
+    remove_all_promotions_from_menu_item_service
+)
+
+from app.services.menu_item_meal_time_service import (
+    add_menu_item_meal_time_service,
+    remove_all_meal_times_from_menu_item_service
+)
+
+
+
+def create_menu_item_service(db, payload):
     try:
-
-        db.execute(
+        result = db.execute(
             text("""
                 EXEC Reztro.AddMenuItem
                     @category_id=:category_id,
@@ -26,20 +53,69 @@ def create_menu_item_service(
                     @is_recommended=:is_recommended,
                     @is_new=:is_new
             """),
-            payload.model_dump()
+            payload.model_dump(exclude={
+                "nutrition",
+                "ingredients",
+                "tag_ids",
+                "meal_time_ids",
+                "promotion_ids"
+            })
         )
+
+        menu = result.mappings().first()
+
+        if not menu:
+            raise HTTPException(
+                status_code=500,
+                detail="Menu item created but menu_id not returned"
+            )
+
+        menu_id = menu["menu_id"]
+
+        if payload.nutrition:
+            add_menu_nutrition_service(db, {
+                "menu_id": menu_id,
+                "calories": payload.nutrition.calories,
+                "proteins": payload.nutrition.proteins,
+                "fats": payload.nutrition.fats,
+                "carbs": payload.nutrition.carbs
+            })
+
+        if payload.ingredients:
+            for ingredient in payload.ingredients:
+                create_menu_ingredient_service(db, {
+                    "menu_id": menu_id,
+                    "ingredient_name": ingredient
+                })
+
+        if payload.tag_ids:
+            for tag_id in payload.tag_ids:
+                add_menu_item_tag_service(db, {
+                    "menu_id": menu_id,
+                    "tag_id": tag_id
+                })
+
+        if payload.meal_time_ids:
+            for meal_time_id in payload.meal_time_ids:
+                add_menu_item_meal_time_service(db, {
+                    "menu_id": menu_id,
+                    "meal_time_id": meal_time_id
+                })
+
+        if payload.promotion_ids:
+            for promotion_id in payload.promotion_ids:
+                add_menu_item_promotion_service(db, {
+                    "menu_id": menu_id,
+                    "promotion_id": promotion_id
+                })
 
         db.commit()
 
-    except SQLAlchemyError as e:
+        return menu
 
+    except Exception as e:
         db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
-        )
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 def get_menu_items_service(
     db
@@ -102,16 +178,15 @@ def get_menu_item_by_id_service(
         )
 
 
-def update_menu_item_service(
-    db,
-    menu_id: int,
-    payload
-):
-
+def update_menu_item_service(db, menu_id: int, payload):
     try:
-
-        params = payload.model_dump()
-
+        params = payload.model_dump(exclude={
+            "nutrition",
+            "ingredients",
+            "tag_ids",
+            "meal_time_ids",
+            "promotion_ids"
+        })
         params["menu_id"] = menu_id
 
         db.execute(
@@ -133,46 +208,102 @@ def update_menu_item_service(
             params
         )
 
+        if payload.nutrition:
+            update_menu_nutrition_by_menu_id_service(
+                db,
+                menu_id,
+                {
+                    "calories": payload.nutrition.calories,
+                    "proteins": payload.nutrition.proteins,
+                    "fats": payload.nutrition.fats,
+                    "carbs": payload.nutrition.carbs
+                }
+            )
+
+        if payload.ingredients is not None:
+            delete_menu_ingredients_by_menu_id_service(db, {"menu_id": menu_id})
+
+            for ingredient in payload.ingredients:
+                create_menu_ingredient_service(db, {
+                    "menu_id": menu_id,
+                    "ingredient_name": ingredient
+                })
+                
+        if payload.tag_ids is not None:
+            remove_all_tags_from_menu_item_service(db, {"menu_id": menu_id})
+
+            for tag_id in payload.tag_ids:
+                add_menu_item_tag_service(db, {
+                    "menu_id": menu_id,
+                    "tag_id": tag_id
+                })
+
+        if payload.meal_time_ids is not None:
+            remove_all_meal_times_from_menu_item_service(db, {"menu_id": menu_id})
+
+            for meal_time_id in payload.meal_time_ids:
+                add_menu_item_meal_time_service(db, {
+                    "menu_id": menu_id,
+                    "meal_time_id": meal_time_id
+                })
+
+        if payload.promotion_ids is not None:
+            remove_all_promotions_from_menu_item_service(db, menu_id)
+
+            for promotion_id in payload.promotion_ids:
+                add_menu_item_promotion_service(db, {
+                    "menu_id": menu_id,
+                    "promotion_id": promotion_id
+                })
+
         db.commit()
 
-    except SQLAlchemyError as e:
-
+    except Exception as e:
         db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
 
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+
+def delete_menu_item_service(db, menu_id: int):
+    try:
+
+        delete_menu_ingredients_by_menu_id_service(
+            db,
+            {"menu_id": menu_id}
         )
 
+        delete_menu_nutrition_by_menu_id_service(
+            db,
+            {"menu_id": menu_id}
+        )
 
-def delete_menu_item_service(
-    db,
-    menu_id: int
-):
+        remove_all_tags_from_menu_item_service(
+            db,
+            {"menu_id": menu_id}
+        )
 
-    try:
+        remove_all_promotions_from_menu_item_service(
+            db,
+            menu_id
+        )
+
+        remove_all_meal_times_from_menu_item_service(
+            db,
+            {"menu_id": menu_id}
+        )
 
         db.execute(
             text("""
                 EXEC Reztro.DeleteMenuItem
                     @menu_id=:menu_id
             """),
-            {
-                "menu_id": menu_id
-            }
+            {"menu_id": menu_id}
         )
 
         db.commit()
 
-    except SQLAlchemyError as e:
-
+    except Exception as e:
         db.rollback()
-
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
-        )
-
+        raise HTTPException(status_code=500, detail=str(e))
 
 def update_menu_availability_service(
     db,

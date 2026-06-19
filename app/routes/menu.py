@@ -1,6 +1,7 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 
 from app.db.database import get_db
+from app.utils.cloudinary import upload_to_cloudinary
 
 from app.schemas.menu_schemas import (
     MenuItemCreate,
@@ -29,21 +30,46 @@ router = APIRouter(
 # CREATE MENU ITEM
 
 @router.post("")
-def create_menu_item(
-    payload: MenuItemCreate,
+async def create_menu_item(
+    category_id: int = Form(...),
+    name: str = Form(...),
+    price: float = Form(...),
+    rating: float = Form(0),
+    description: str = Form(None),
+    values_text: str = Form(None),
+    is_featured: bool = Form(False),
+    is_top_rated: bool = Form(False),
+    is_recommended: bool = Form(False),
+    is_new: bool = Form(False),
+    file: UploadFile = File(None),
     db=Depends(get_db)
 ):
+    image_url = None
 
-    create_menu_item_service(
-        db,
-        payload
+    if file:
+        upload_result = upload_to_cloudinary(file)
+        image_url = upload_result["url"]
+
+    payload = MenuItemCreate(
+        category_id=category_id,
+        name=name,
+        image_url=image_url,
+        price=price,
+        rating=rating,
+        description=description,
+        values_text=values_text,
+        is_featured=is_featured,
+        is_top_rated=is_top_rated,
+        is_recommended=is_recommended,
+        is_new=is_new
     )
+
+    create_menu_item_service(db, payload)
 
     return {
         "success": True,
         "message": "Menu item created successfully"
     }
-
 
 # GET ALL MENU ITEMS
 
@@ -82,18 +108,56 @@ def get_menu_item_by_id(
 
 # UPDATE MENU ITEM
 
+from fastapi import UploadFile, File, Form, Depends
+
+from app.utils.cloudinary import upload_to_cloudinary
+from app.services.menu_service import (
+    update_menu_item_service,
+    get_menu_item_by_id_service
+)
+from app.schemas.menu_schemas import MenuItemUpdate
+from app.db.database import get_db
+
+
 @router.put("/{menu_id}")
-def update_menu_item(
+async def update_menu_item(
     menu_id: int,
-    payload: MenuItemUpdate,
+    category_id: int = Form(...),
+    name: str = Form(...),
+    price: float = Form(...),
+    rating: float = Form(0),
+    description: str = Form(None),
+    values_text: str = Form(None),
+    is_featured: bool = Form(False),
+    is_top_rated: bool = Form(False),
+    is_recommended: bool = Form(False),
+    is_new: bool = Form(False),
+    file: UploadFile = File(None),
     db=Depends(get_db)
 ):
+    existing = get_menu_item_by_id_service(db, menu_id)
 
-    update_menu_item_service(
-        db,
-        menu_id,
-        payload
+    if file:
+        upload_result = upload_to_cloudinary(file)
+        image_url = upload_result["url"]
+    else:
+        image_url = existing["image_url"]  # keep old image
+
+    payload = MenuItemUpdate(
+        category_id=category_id,
+        name=name,
+        image_url=image_url,
+        price=price,
+        rating=rating,
+        description=description,
+        values_text=values_text,
+        is_featured=is_featured,
+        is_top_rated=is_top_rated,
+        is_recommended=is_recommended,
+        is_new=is_new
     )
+
+    update_menu_item_service(db, menu_id, payload)
 
     return {
         "success": True,
