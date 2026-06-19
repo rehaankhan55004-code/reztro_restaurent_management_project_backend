@@ -58,7 +58,8 @@ def create_menu_item_service(db, payload):
                 "ingredients",
                 "tag_ids",
                 "meal_time_ids",
-                "promotion_ids"
+                "promotion_ids",
+                "category_ids"   
             })
         )
 
@@ -71,6 +72,26 @@ def create_menu_item_service(db, payload):
             )
 
         menu_id = menu["menu_id"]
+
+        category_ids = payload.category_ids or []
+
+        if payload.category_id and payload.category_id not in category_ids:
+            category_ids.append(payload.category_id)
+
+        category_ids = list(set(category_ids)) 
+        
+        for category_id in category_ids:
+            db.execute(
+                text("""
+                    EXEC Reztro.AddMenuItemCategory
+                        @menu_id=:menu_id,
+                        @category_id=:category_id
+                """),
+                {
+                    "menu_id": menu_id,
+                    "category_id": category_id
+                }
+            )
 
         if payload.nutrition:
             add_menu_nutrition_service(db, {
@@ -178,17 +199,40 @@ def get_menu_item_by_id_service(
         )
 
 
+from app.utils.cloudinary import delete_from_cloudinary
+
 def update_menu_item_service(db, menu_id: int, payload):
     try:
-        params = payload.model_dump(exclude={
-            "nutrition",
-            "ingredients",
-            "tag_ids",
-            "meal_time_ids",
-            "promotion_ids"
-        })
+        # 🔹 Get existing menu item
+        existing = db.execute(
+            text("""
+                EXEC Reztro.GetMenuItemById
+                    @menu_id=:menu_id
+            """),
+            {"menu_id": menu_id}
+        ).mappings().first()
+
+        if not existing:
+            raise HTTPException(status_code=404, detail="Menu item not found")
+
+        old_image_url = existing.get("image_url")
+        new_image_url = payload.image_url
+
+        params = payload.model_dump(
+            exclude={
+                "nutrition",
+                "ingredients",
+                "tag_ids",
+                "meal_time_ids",
+                "promotion_ids",
+                "category_ids"
+            },
+            exclude_unset=True
+        )
+
         params["menu_id"] = menu_id
 
+        params["image_url"] = new_image_url if new_image_url else old_image_url
         db.execute(
             text("""
                 EXEC Reztro.UpdateMenuItem
@@ -208,6 +252,38 @@ def update_menu_item_service(db, menu_id: int, payload):
             params
         )
 
+        if hasattr(payload, "category_ids") and payload.category_ids is not None:
+            category_ids = payload.category_ids or []
+
+            if payload.category_id and payload.category_id not in category_ids:
+                category_ids.append(payload.category_id)
+
+            category_ids = list(set(category_ids))
+
+            # 🔹 remove old
+            db.execute(
+                text("""
+                    EXEC Reztro.RemoveAllCategoriesFromMenuItem
+                        @menu_id=:menu_id
+                """),
+                {"menu_id": menu_id}
+            )
+
+            # 🔹 add new
+            for category_id in category_ids:
+                db.execute(
+                    text("""
+                        EXEC Reztro.AddMenuItemCategory
+                            @menu_id=:menu_id,
+                            @category_id=:category_id
+                    """),
+                    {
+                        "menu_id": menu_id,
+                        "category_id": category_id
+                    }
+                )
+
+        # 🔹 NUTRITION
         if payload.nutrition:
             update_menu_nutrition_by_menu_id_service(
                 db,
@@ -220,6 +296,7 @@ def update_menu_item_service(db, menu_id: int, payload):
                 }
             )
 
+        # 🔹 INGREDIENTS
         if payload.ingredients is not None:
             delete_menu_ingredients_by_menu_id_service(db, {"menu_id": menu_id})
 
@@ -228,7 +305,8 @@ def update_menu_item_service(db, menu_id: int, payload):
                     "menu_id": menu_id,
                     "ingredient_name": ingredient
                 })
-                
+
+        # 🔹 TAGS
         if payload.tag_ids is not None:
             remove_all_tags_from_menu_item_service(db, {"menu_id": menu_id})
 
@@ -238,6 +316,7 @@ def update_menu_item_service(db, menu_id: int, payload):
                     "tag_id": tag_id
                 })
 
+        # 🔹 MEAL TIMES
         if payload.meal_time_ids is not None:
             remove_all_meal_times_from_menu_item_service(db, {"menu_id": menu_id})
 
@@ -247,8 +326,9 @@ def update_menu_item_service(db, menu_id: int, payload):
                     "meal_time_id": meal_time_id
                 })
 
+        # 🔹 PROMOTIONS
         if payload.promotion_ids is not None:
-            remove_all_promotions_from_menu_item_service(db, menu_id)
+            remove_all_promotions_from_menu_item_service(db, {"menu_id": menu_id})
 
             for promotion_id in payload.promotion_ids:
                 add_menu_item_promotion_service(db, {
