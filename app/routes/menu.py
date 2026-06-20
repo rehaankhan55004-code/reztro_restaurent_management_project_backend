@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Form
 
 from app.db.database import get_db
 from app.utils.cloudinary import upload_to_cloudinary
@@ -7,8 +7,10 @@ from app.schemas.menu_schemas import (
     MenuItemCreate,
     MenuItemUpdate,
     MenuAvailabilityUpdate,
-    MenuStatsUpdate
+    MenuStatsUpdate,
 )
+import json
+from decimal import Decimal
 
 from app.services.menu_service import (
     create_menu_item_service,
@@ -19,112 +21,178 @@ from app.services.menu_service import (
     update_menu_availability_service,
     update_menu_stats_service,
     get_featured_menu_items_service,
-    get_top_rated_menu_items_service
+    get_top_rated_menu_items_service,
 )
 
-router = APIRouter(
-    prefix="/menu-items",
-    tags=["Menu Items"]
-)
+router = APIRouter(prefix="/menu-items", tags=["Menu Items"])
+
+
+def safe_json_load(value, default):
+    try:
+        return json.loads(value) if value else default
+    except:
+        return default
+
 
 @router.post("/upload-image")
 async def upload_menu_image(file: UploadFile = File(...)):
     result = upload_to_cloudinary(file)
 
-    return {
-        "success": True,
-        "data": result
-    }
+    return {"success": True, "data": result}
 
 
 @router.post("")
-def create_menu_item(
-    payload: MenuItemCreate,
-    db=Depends(get_db)
+async def create_menu_item(
+    category_id: int = Form(...),
+    name: str = Form(...),
+    price: Decimal = Form(...),
+    rating: Decimal = Form(0),
+    description: str | None = Form(None),
+    values_text: str | None = Form(None),
+    image_url: str | None = Form(None),
+    nutrition: str | None = Form(None),
+    ingredients: str | None = Form(None),
+    tag_ids: str | None = Form(None),
+    meal_time_ids: str | None = Form(None),
+    promotion_ids: str | None = Form(None),
+    category_ids: str | None = Form(None),
+    is_featured: bool = Form(False),
+    is_top_rated: bool = Form(False),
+    is_recommended: bool = Form(False),
+    is_new: bool = Form(False),
+    file: UploadFile | None = File(None),
+    db=Depends(get_db),
 ):
+    final_image_url = image_url
+
+
+    if file:
+        upload_result = upload_to_cloudinary(file)
+        final_image_url = upload_result["url"]
+
+    elif image_url:
+        upload_result = upload_to_cloudinary(image_url)  
+        final_image_url = upload_result["url"]
+
+    payload = MenuItemCreate(
+        category_id=category_id,
+        category_ids=safe_json_load(category_ids, []),
+        name=name,
+        image_url=final_image_url,
+        price=price,
+        rating=rating,
+        description=description,
+        values_text=values_text,
+        nutrition=safe_json_load(nutrition, None),
+        ingredients=safe_json_load(ingredients, []),
+        tag_ids=safe_json_load(tag_ids, []),
+        meal_time_ids=safe_json_load(meal_time_ids, []),
+        promotion_ids=safe_json_load(promotion_ids, []),
+        is_featured=is_featured,
+        is_top_rated=is_top_rated,
+        is_recommended=is_recommended,
+        is_new=is_new,
+    )
+
     data = create_menu_item_service(db, payload)
 
-    return {
-        "success": True,
-        "message": "Menu item created successfully",
-        "data": data
-    }
+    return {"success": True, "message": "Menu item created successfully", "data": data}
+
 
 @router.get("")
 def get_menu_items(db=Depends(get_db)):
 
     items = get_menu_items_service(db)
 
-    return {
-        "success": True,
-        "count": len(items),
-        "data": items
-    }
+    return {"success": True, "count": len(items), "data": items}
+
 
 @router.get("/{menu_id}")
-def get_menu_item_by_id(
-    menu_id: int,
-    db=Depends(get_db)
-):
+def get_menu_item_by_id(menu_id: int, db=Depends(get_db)):
     item = get_menu_item_by_id_service(db, menu_id)
 
-    return {
-        "success": True,
-        "data": item
-    }
+    return {"success": True, "data": item}
+
 
 @router.put("/{menu_id}")
-def update_menu_item(
+async def update_menu_item(
     menu_id: int,
-    payload: MenuItemUpdate,
-    db=Depends(get_db)
+    category_id: int | None = Form(None),
+    name: str | None = Form(None),
+    price: Decimal | None = Form(None),
+    rating: Decimal | None = Form(None),
+    description: str | None = Form(None),
+    values_text: str | None = Form(None),
+    image_url: str | None = Form(None),
+    nutrition: str | None = Form(None),
+    ingredients: str | None = Form(None),
+    tag_ids: str | None = Form(None),
+    meal_time_ids: str | None = Form(None),
+    promotion_ids: str | None = Form(None),
+    category_ids: str | None = Form(None),
+    is_featured: bool | None = Form(None),
+    is_top_rated: bool | None = Form(None),
+    is_recommended: bool | None = Form(None),
+    is_new: bool | None = Form(None),
+    file: UploadFile | None = File(None),
+    db=Depends(get_db),
 ):
+    final_image_url = image_url
+
+    if file:
+        upload_result = upload_to_cloudinary(file)
+        final_image_url = upload_result["url"]
+
+    elif image_url:
+        upload_result = upload_to_cloudinary(image_url)  
+        final_image_url = upload_result["url"]
+
+    payload = MenuItemUpdate(
+        category_id=category_id,
+        category_ids=safe_json_load(category_ids, None),
+        name=name,
+        image_url=final_image_url,
+        price=price,
+        rating=rating,
+        description=description,
+        values_text=values_text,
+        nutrition=safe_json_load(nutrition, None),
+        ingredients=safe_json_load(ingredients, None),
+        tag_ids=safe_json_load(tag_ids, None),
+        meal_time_ids=safe_json_load(meal_time_ids, None),
+        promotion_ids=safe_json_load(promotion_ids, None),
+        is_featured=is_featured,
+        is_top_rated=is_top_rated,
+        is_recommended=is_recommended,
+        is_new=is_new,
+    )
+
     update_menu_item_service(db, menu_id, payload)
 
-    return {
-        "success": True,
-        "message": "Menu item updated successfully"
-    }
-    
+    return {"success": True, "message": "Menu item updated successfully"}
+
+
 @router.delete("/{menu_id}")
-def delete_menu_item(
-    menu_id: int,
-    db=Depends(get_db)
-):
+def delete_menu_item(menu_id: int, db=Depends(get_db)):
     delete_menu_item_service(db, menu_id)
 
-    return {
-        "success": True,
-        "message": "Menu item deleted successfully"
-    }
+    return {"success": True, "message": "Menu item deleted successfully"}
 
 
 @router.patch("/{menu_id}/availability")
 def update_menu_availability(
-    menu_id: int,
-    payload: MenuAvailabilityUpdate,
-    db=Depends(get_db)
+    menu_id: int, payload: MenuAvailabilityUpdate, db=Depends(get_db)
 ):
     update_menu_availability_service(db, menu_id, payload)
 
-    return {
-        "success": True,
-        "message": "Availability updated successfully"
-    }
+    return {"success": True, "message": "Availability updated successfully"}
 
 
 @router.patch("/{menu_id}/stats")
-def update_menu_stats(
-    menu_id: int,
-    payload: MenuStatsUpdate,
-    db=Depends(get_db)
-):
+def update_menu_stats(menu_id: int, payload: MenuStatsUpdate, db=Depends(get_db)):
     update_menu_stats_service(db, menu_id, payload)
 
-    return {
-        "success": True,
-        "message": "Stats updated successfully"
-    }
+    return {"success": True, "message": "Stats updated successfully"}
 
 
 @router.get("/featured")
@@ -132,19 +200,12 @@ def get_featured_menu_items(db=Depends(get_db)):
 
     items = get_featured_menu_items_service(db)
 
-    return {
-        "success": True,
-        "count": len(items),
-        "data": items
-    }
+    return {"success": True, "count": len(items), "data": items}
+
 
 @router.get("/top-rated")
 def get_top_rated_menu_items(db=Depends(get_db)):
 
     items = get_top_rated_menu_items_service(db)
 
-    return {
-        "success": True,
-        "count": len(items),
-        "data": items
-    }
+    return {"success": True, "count": len(items), "data": items}

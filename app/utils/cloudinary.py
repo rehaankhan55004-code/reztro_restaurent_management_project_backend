@@ -23,17 +23,33 @@ router = APIRouter(
 )
 
 
-# UPLOAD IMAGE TO CLOUDINARY
-
-def upload_to_cloudinary(file: UploadFile, folder: str = "reztro"):
+def upload_to_cloudinary(file_or_url, folder: str = "reztro"):
     try:
-        if file.content_type not in ALLOWED_TYPES:
-            raise HTTPException(
-                status_code=400,
-                detail="Invalid file type. Only JPEG, PNG, WEBP allowed."
+        if isinstance(file_or_url, UploadFile):
+
+            if file_or_url.content_type not in ALLOWED_TYPES:
+                raise HTTPException(
+                    status_code=400,
+                    detail="Invalid file type. Only JPEG, PNG, WEBP allowed."
+                )
+
+            result = cloudinary.uploader.upload(
+                file_or_url.file,
+                folder=folder
             )
 
-        result = cloudinary.uploader.upload(file.file, folder=folder)
+        elif isinstance(file_or_url, str):
+
+            result = cloudinary.uploader.upload(
+                file_or_url,
+                folder=folder
+            )
+
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid input for image upload"
+            )
 
         return {
             "url": result.get("secure_url"),
@@ -42,8 +58,12 @@ def upload_to_cloudinary(file: UploadFile, folder: str = "reztro"):
 
     except HTTPException:
         raise
+
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail=f"Upload failed: {str(e)}"
+        )
 
 
 # DELETE IMAGE FROM CLOUDINARY
