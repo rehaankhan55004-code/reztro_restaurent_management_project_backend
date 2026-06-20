@@ -3,25 +3,21 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 
-def create_menu_category_service(
-    db,
-    payload
-):
-
+def create_menu_category_service(db, payload):
     try:
+        data = payload if isinstance(payload, dict) else payload.model_dump()
 
         db.execute(
             text("""
                 EXEC Reztro.AddMenuCategory
                     @category_name=:category_name
             """),
-            payload.model_dump()
+            data
         )
 
         db.commit()
 
     except SQLAlchemyError as e:
-
         db.rollback()
 
         error_message = str(e.orig)
@@ -99,13 +95,17 @@ def get_menu_category_by_id_service(
         )
 
 
-def update_menu_category_service(
-    db,
-    category_id: int,
-    payload
-):
-
+def update_menu_category_service(db, category_id: int, payload):
     try:
+        data = payload if isinstance(payload, dict) else payload.model_dump(exclude_unset=True)
+
+        if not data or "category_name" not in data:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="category_name is required"
+            )
+
+        data["category_id"] = category_id
 
         db.execute(
             text("""
@@ -113,23 +113,20 @@ def update_menu_category_service(
                     @category_id=:category_id,
                     @category_name=:category_name
             """),
-            {
-                "category_id": category_id,
-                "category_name": payload.category_name
-            }
+            data
         )
 
         db.commit()
 
+    except HTTPException:
+        raise
+
     except SQLAlchemyError as e:
-
         db.rollback()
-
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
-
 
 def delete_menu_category_service(
     db,

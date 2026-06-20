@@ -116,7 +116,12 @@ def get_menu_nutrition_by_menu_id_service(db, payload):
 #  UPDATE BY NUTRITION ID
 def update_menu_nutrition_service(db, nutrition_id: int, payload):
     try:
-        data = payload if isinstance(payload, dict) else payload.model_dump()
+        # ✅ Handle dict + model + partial update
+        data = payload if isinstance(payload, dict) else payload.model_dump(exclude_unset=True)
+
+        if not data:
+            return None  # nothing to update
+
         data["nutrition_id"] = nutrition_id
 
         result = db.execute(
@@ -131,7 +136,7 @@ def update_menu_nutrition_service(db, nutrition_id: int, payload):
             data
         )
 
-        db.commit() 
+        db.commit()
 
         return result.mappings().first()
 

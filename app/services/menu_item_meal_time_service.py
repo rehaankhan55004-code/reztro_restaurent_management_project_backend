@@ -6,13 +6,15 @@ from sqlalchemy.exc import SQLAlchemyError
 #  ADD
 def add_menu_item_meal_time_service(db, payload):
     try:
+        data = payload if isinstance(payload, dict) else payload.model_dump()
+
         result = db.execute(
             text("""
                 EXEC Reztro.AddMenuItemMealTime
                     @menu_id=:menu_id,
                     @meal_time_id=:meal_time_id
             """),
-            payload.model_dump()
+            data
         )
 
         return result.mappings().first()

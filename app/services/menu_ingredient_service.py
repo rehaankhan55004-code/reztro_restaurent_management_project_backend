@@ -6,13 +6,15 @@ from sqlalchemy.exc import SQLAlchemyError
 #  CREATE
 def create_menu_ingredient_service(db, payload):
     try:
+        data = payload if isinstance(payload, dict) else payload.model_dump()
+
         result = db.execute(
             text("""
                 EXEC Reztro.AddMenuIngredient
                     @menu_id=:menu_id,
                     @ingredient_name=:ingredient_name
             """),
-            payload.model_dump()
+            data
         )
 
         return result.mappings().first()
@@ -98,8 +100,12 @@ def get_menu_ingredients_by_menu_id_service(db, payload):
 #  UPDATE
 def update_menu_ingredient_service(db, ingredient_id: int, payload):
     try:
-        params = payload.model_dump()
-        params["ingredient_id"] = ingredient_id
+        data = payload if isinstance(payload, dict) else payload.model_dump(exclude_unset=True)
+
+        if not data:
+            return None  # nothing to update
+
+        data["ingredient_id"] = ingredient_id
 
         result = db.execute(
             text("""
@@ -107,17 +113,19 @@ def update_menu_ingredient_service(db, ingredient_id: int, payload):
                     @ingredient_id=:ingredient_id,
                     @ingredient_name=:ingredient_name
             """),
-            params
+            data
         )
+
+        db.commit()
 
         return result.mappings().first()
 
     except SQLAlchemyError as e:
+        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
-
 
 #  DELETE BY ID
 def delete_menu_ingredient_service(db, ingredient_id: int):
