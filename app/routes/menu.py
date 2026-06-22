@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form
+from fastapi import APIRouter, Depends, UploadFile, File, Form,HTTPException
 
 from app.db.database import get_db
 from app.utils.cloudinary import upload_to_cloudinary
@@ -124,16 +124,19 @@ async def update_menu_item(
     description: str | None = Form(None),
     values_text: str | None = Form(None),
     image_url: str | None = Form(None),
+
     nutrition: str | None = Form(None),
     ingredients: str | None = Form(None),
     tag_ids: str | None = Form(None),
     meal_time_ids: str | None = Form(None),
     promotion_ids: str | None = Form(None),
     category_ids: str | None = Form(None),
+
     is_featured: bool | None = Form(None),
     is_top_rated: bool | None = Form(None),
     is_recommended: bool | None = Form(None),
     is_new: bool | None = Form(None),
+
     file: UploadFile | None = File(None),
     db=Depends(get_db),
 ):
@@ -144,23 +147,42 @@ async def update_menu_item(
         final_image_url = upload_result["url"]
 
     elif image_url:
-        upload_result = upload_to_cloudinary(image_url)  
+        upload_result = upload_to_cloudinary(image_url)
         final_image_url = upload_result["url"]
+
+    def parse_json(field_name, value):
+        if value is None:
+            return None
+        try:
+            return json.loads(value)
+        except Exception:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Invalid JSON format for {field_name}"
+            )
+
+    nutrition_data = parse_json("nutrition", nutrition)
+    ingredients_data = parse_json("ingredients", ingredients)
+    tag_ids_data = parse_json("tag_ids", tag_ids)
+    meal_time_ids_data = parse_json("meal_time_ids", meal_time_ids)
+    promotion_ids_data = parse_json("promotion_ids", promotion_ids)
+    category_ids_data = parse_json("category_ids", category_ids)
+
 
     payload = MenuItemUpdate(
         category_id=category_id,
-        category_ids=safe_json_load(category_ids, None),
+        category_ids=category_ids_data,
         name=name,
         image_url=final_image_url,
         price=price,
         rating=rating,
         description=description,
         values_text=values_text,
-        nutrition=safe_json_load(nutrition, None),
-        ingredients=safe_json_load(ingredients, None),
-        tag_ids=safe_json_load(tag_ids, None),
-        meal_time_ids=safe_json_load(meal_time_ids, None),
-        promotion_ids=safe_json_load(promotion_ids, None),
+        nutrition=nutrition_data,
+        ingredients=ingredients_data,
+        tag_ids=tag_ids_data,
+        meal_time_ids=meal_time_ids_data,
+        promotion_ids=promotion_ids_data,
         is_featured=is_featured,
         is_top_rated=is_top_rated,
         is_recommended=is_recommended,
@@ -170,7 +192,6 @@ async def update_menu_item(
     update_menu_item_service(db, menu_id, payload)
 
     return {"success": True, "message": "Menu item updated successfully"}
-
 
 @router.delete("/{menu_id}")
 def delete_menu_item(menu_id: int, db=Depends(get_db)):

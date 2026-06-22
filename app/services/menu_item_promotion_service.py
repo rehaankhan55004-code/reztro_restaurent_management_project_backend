@@ -3,9 +3,16 @@ from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 
+def normalize_payload(payload):
+    if payload is None:
+        raise HTTPException(status_code=400, detail="Payload cannot be None")
+
+    return payload if isinstance(payload, dict) else payload.model_dump(exclude_unset=True)
+
+
 def add_menu_item_promotion_service(db, payload):
     try:
-        data = payload if isinstance(payload, dict) else payload.model_dump()
+        data = normalize_payload(payload)
 
         result = db.execute(
             text("""
@@ -28,45 +35,45 @@ def add_menu_item_promotion_service(db, payload):
 
 
 def get_menu_item_promotions_service(db):
-
-    result = db.execute(
-        text("""
-            EXEC Reztro.GetMenuItemPromotions
-        """)
-    )
-
-    return result.mappings().all()
+    try:
+        result = db.execute(text("EXEC Reztro.GetMenuItemPromotions"))
+        return result.mappings().all()
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=500, detail=str(e.orig))
 
 
-def get_promotions_by_menu_id_service(db, menu_id):
+def get_promotions_by_menu_id_service(db, payload):
+    try:
+        data = normalize_payload(payload)
 
-    result = db.execute(
-        text("""
-            EXEC Reztro.GetPromotionsByMenuId
-                @menu_id = :menu_id
-        """),
-        {
-            "menu_id": menu_id
-        }
-    )
+        result = db.execute(
+            text("""
+                EXEC Reztro.GetPromotionsByMenuId
+                    @menu_id = :menu_id
+            """),
+            data
+        )
 
-    return result.mappings().all()
+        return result.mappings().all()
+
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=400, detail=str(e.orig))
 
 
-def get_active_promotions_by_menu_id_service(db, menu_id):
+def get_active_promotions_by_menu_id_service(db, payload):
+    try:
+        data = normalize_payload(payload)
+        result = db.execute(
+            text("""
+                EXEC Reztro.GetActivePromotionsByMenuId
+                    @menu_id = :menu_id
+            """),
+            data
+        )
 
-    result = db.execute(
-        text("""
-            EXEC Reztro.GetActivePromotionsByMenuId
-                @menu_id = :menu_id
-        """),
-        {
-            "menu_id": menu_id
-        }
-    )
-
-    return result.mappings().all()
-
+        return result.mappings().all()
+    except SQLAlchemyError as e:
+        raise HTTPException(status_code=400, detail=str(e.orig))
 
 def get_menu_items_by_promotion_id_service(db, promotion_id):
 
@@ -85,7 +92,7 @@ def get_menu_items_by_promotion_id_service(db, promotion_id):
 
 def remove_menu_item_promotion_service(db, payload):
     try:
-        data = payload if isinstance(payload, dict) else payload.model_dump()
+        data = normalize_payload(payload)
 
         result = db.execute(
             text("""
@@ -107,21 +114,19 @@ def remove_menu_item_promotion_service(db, payload):
         )
 
 
-def remove_all_promotions_from_menu_item_service(db, menu_id):
+def remove_all_promotions_from_menu_item_service(db, payload):
     try:
+        data = normalize_payload(payload)
+
         result = db.execute(
             text("""
                 EXEC Reztro.RemoveAllPromotionsFromMenuItem
                     @menu_id = :menu_id
             """),
-            {
-                "menu_id": menu_id
-            }
+            data
         )
 
-        response = result.mappings().first()
-
-        return response  
+        return result.mappings().first()
 
     except SQLAlchemyError as e:
         raise HTTPException( 

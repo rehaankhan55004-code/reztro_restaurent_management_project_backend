@@ -1,40 +1,37 @@
 from fastapi import HTTPException, status
-
-from sqlalchemy import text
-from sqlalchemy.exc import SQLAlchemyError
-
-
-from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
 from app.services.menu_nutrition_service import (
     add_menu_nutrition_service,
     update_menu_nutrition_by_menu_id_service,
-    delete_menu_nutrition_by_menu_id_service
+    delete_menu_nutrition_by_menu_id_service,
+    get_menu_nutrition_by_menu_id_service   
 )
 
 from app.services.menu_ingredient_service import (
     create_menu_ingredient_service,
-    delete_menu_ingredients_by_menu_id_service
+    delete_menu_ingredients_by_menu_id_service,
+    get_menu_ingredients_by_menu_id_service  
 )
 
 from app.services.menu_item_tag_service import (
     add_menu_item_tag_service,
-    remove_all_tags_from_menu_item_service
+    remove_all_tags_from_menu_item_service,
+    get_tags_by_menu_id_service            
 )
 
 from app.services.menu_item_promotion_service import (
     add_menu_item_promotion_service,
-    remove_all_promotions_from_menu_item_service
+    remove_all_promotions_from_menu_item_service,
+    get_promotions_by_menu_id_service       
 )
 
 from app.services.menu_item_meal_time_service import (
     add_menu_item_meal_time_service,
-    remove_all_meal_times_from_menu_item_service
+    remove_all_meal_times_from_menu_item_service,
+    get_meal_times_by_menu_id_service       
 )
-
-
 
 def create_menu_item_service(db, payload):
     try:
@@ -138,72 +135,135 @@ def create_menu_item_service(db, payload):
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
 
-def get_menu_items_service(
-    db
-):
-
+def get_menu_items_service(db):
     try:
-
         result = db.execute(
-            text("""
-                EXEC Reztro.GetMenuItems
-            """)
+            text(""" EXEC Reztro.GetMenuItems """)
         )
 
-        return result.mappings().all()
+        items = result.mappings().all()
+
+        enriched_items = []
+
+        for item in items:
+            menu_id = item["menu_id"]
+            enriched_item = dict(item)
+
+            try:
+                enriched_item["nutrition"] = get_menu_nutrition_by_menu_id_service(
+                    db, {"menu_id": menu_id}
+                )
+            except Exception:
+                enriched_item["nutrition"] = None
+
+            try:
+                ing = get_menu_ingredients_by_menu_id_service(
+                    db, {"menu_id": menu_id}
+                )
+                enriched_item["ingredients"] = [i["ingredient_name"] for i in ing]
+            except Exception:
+                enriched_item["ingredients"] = []
+
+            try:
+                enriched_item["tags"] = get_tags_by_menu_id_service(
+                    db, {"menu_id": menu_id}
+                )
+            except Exception:
+                enriched_item["tags"] = []
+
+            try:
+                enriched_item["meal_times"] = get_meal_times_by_menu_id_service(
+                    db, {"menu_id": menu_id}
+                )
+            except Exception:
+                enriched_item["meal_times"] = []
+
+            try:
+                enriched_item["promotions"] = get_promotions_by_menu_id_service(
+                    db, menu_id
+                )
+            except Exception:
+                enriched_item["promotions"] = []
+
+            enriched_items.append(enriched_item)
+
+        return enriched_items
 
     except SQLAlchemyError as e:
-
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
-
-
-def get_menu_item_by_id_service(
-    db,
-    menu_id: int
-):
-
+        
+def get_menu_item_by_id_service(db, menu_id: int):
     try:
-
         result = db.execute(
             text("""
                 EXEC Reztro.GetMenuItemById
                     @menu_id=:menu_id
             """),
-            {
-                "menu_id": menu_id
-            }
+            {"menu_id": menu_id}
         )
 
         item = result.mappings().first()
 
         if not item:
-
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Menu item not found"
             )
 
-        return item
+        enriched_item = dict(item)
+
+        try:
+            enriched_item["nutrition"] = get_menu_nutrition_by_menu_id_service(
+                db, {"menu_id": menu_id}
+            )
+        except Exception:
+            enriched_item["nutrition"] = None
+
+        try:
+            ing = get_menu_ingredients_by_menu_id_service(
+                db, {"menu_id": menu_id}
+            )
+            enriched_item["ingredients"] = [i["ingredient_name"] for i in ing]
+        except Exception:
+            enriched_item["ingredients"] = []
+
+        try:
+            enriched_item["tags"] = get_tags_by_menu_id_service(
+                db, {"menu_id": menu_id}
+            )
+        except Exception:
+            enriched_item["tags"] = []
+
+        try:
+            enriched_item["meal_times"] = get_meal_times_by_menu_id_service(
+                db, {"menu_id": menu_id}
+            )
+        except Exception:
+            enriched_item["meal_times"] = []
+
+        try:
+            enriched_item["promotions"] = get_promotions_by_menu_id_service(
+                db, menu_id
+            )
+        except Exception:
+            enriched_item["promotions"] = []
+
+        return enriched_item
 
     except HTTPException:
         raise
 
     except SQLAlchemyError as e:
-
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
-
-
-from app.utils.cloudinary import delete_from_cloudinary
-
+        
 def update_menu_item_service(db, menu_id: int, payload):
     try:
-        # 🔹 Get existing menu item
         existing = db.execute(
             text("""
                 EXEC Reztro.GetMenuItemById
@@ -215,24 +275,21 @@ def update_menu_item_service(db, menu_id: int, payload):
         if not existing:
             raise HTTPException(status_code=404, detail="Menu item not found")
 
-        old_image_url = existing.get("image_url")
-        new_image_url = payload.image_url
+        params = {
+            "menu_id": menu_id,
+            "category_id": payload.category_id if payload.category_id is not None else existing["category_id"],
+            "name": payload.name if payload.name is not None else existing["name"],
+            "image_url": payload.image_url if payload.image_url not in [None, ""] else existing["image_url"],
+            "price": payload.price if payload.price is not None else existing["price"],
+            "rating": payload.rating if payload.rating is not None else existing["rating"],
+            "description": payload.description if payload.description is not None else existing["description"],
+            "values_text": payload.values_text if payload.values_text is not None else existing["values_text"],
+            "is_featured": payload.is_featured if payload.is_featured is not None else existing["is_featured"],
+            "is_top_rated": payload.is_top_rated if payload.is_top_rated is not None else existing["is_top_rated"],
+            "is_recommended": payload.is_recommended if payload.is_recommended is not None else existing["is_recommended"],
+            "is_new": payload.is_new if payload.is_new is not None else existing["is_new"],
+        }
 
-        params = payload.model_dump(
-            exclude={
-                "nutrition",
-                "ingredients",
-                "tag_ids",
-                "meal_time_ids",
-                "promotion_ids",
-                "category_ids"
-            },
-            exclude_unset=True
-        )
-
-        params["menu_id"] = menu_id
-
-        params["image_url"] = new_image_url if new_image_url else old_image_url
         db.execute(
             text("""
                 EXEC Reztro.UpdateMenuItem
@@ -252,15 +309,14 @@ def update_menu_item_service(db, menu_id: int, payload):
             params
         )
 
-        if hasattr(payload, "category_ids") and payload.category_ids is not None:
+        if payload.category_ids is not None:
             category_ids = payload.category_ids or []
 
-            if payload.category_id and payload.category_id not in category_ids:
-                category_ids.append(payload.category_id)
+            if params["category_id"] not in category_ids:
+                category_ids.append(params["category_id"])
 
             category_ids = list(set(category_ids))
 
-            # 🔹 remove old
             db.execute(
                 text("""
                     EXEC Reztro.RemoveAllCategoriesFromMenuItem
@@ -269,7 +325,6 @@ def update_menu_item_service(db, menu_id: int, payload):
                 {"menu_id": menu_id}
             )
 
-            # 🔹 add new
             for category_id in category_ids:
                 db.execute(
                     text("""
@@ -277,36 +332,54 @@ def update_menu_item_service(db, menu_id: int, payload):
                             @menu_id=:menu_id,
                             @category_id=:category_id
                     """),
-                    {
-                        "menu_id": menu_id,
-                        "category_id": category_id
-                    }
+                    {"menu_id": menu_id, "category_id": category_id}
                 )
 
-        # 🔹 NUTRITION
-        if payload.nutrition:
-            update_menu_nutrition_by_menu_id_service(
-                db,
-                menu_id,
-                {
-                    "calories": payload.nutrition.calories,
-                    "proteins": payload.nutrition.proteins,
-                    "fats": payload.nutrition.fats,
-                    "carbs": payload.nutrition.carbs
-                }
+        if payload.nutrition is not None:
+
+            nutrition_data = (
+                payload.nutrition
+                if isinstance(payload.nutrition, dict)
+                else payload.nutrition.model_dump(exclude_unset=True)
             )
 
-        # 🔹 INGREDIENTS
+            try:
+                existing = None
+
+                try:
+                    existing = get_menu_nutrition_by_menu_id_service(
+                        db, {"menu_id": menu_id}
+                    )
+                except HTTPException as e:
+                    if e.status_code != 404:
+                        raise  
+
+                if existing:
+                    update_menu_nutrition_by_menu_id_service(
+                        db, menu_id, nutrition_data
+                    )
+                else:
+                    add_menu_nutrition_service(db, {
+                        **nutrition_data,
+                        "menu_id": menu_id
+                    })
+
+            except Exception as e:
+                raise HTTPException(
+                    status_code=500,
+                    detail=f"Nutrition update failed: {str(e)}"
+                )
+
         if payload.ingredients is not None:
             delete_menu_ingredients_by_menu_id_service(db, {"menu_id": menu_id})
 
-            for ingredient in payload.ingredients:
-                create_menu_ingredient_service(db, {
-                    "menu_id": menu_id,
-                    "ingredient_name": ingredient
-                })
+            for ing in payload.ingredients:
+                if ing:
+                    create_menu_ingredient_service(db, {
+                        "menu_id": menu_id,
+                        "ingredient_name": ing
+                    })
 
-        # 🔹 TAGS
         if payload.tag_ids is not None:
             remove_all_tags_from_menu_item_service(db, {"menu_id": menu_id})
 
@@ -316,32 +389,31 @@ def update_menu_item_service(db, menu_id: int, payload):
                     "tag_id": tag_id
                 })
 
-        # 🔹 MEAL TIMES
         if payload.meal_time_ids is not None:
             remove_all_meal_times_from_menu_item_service(db, {"menu_id": menu_id})
 
-            for meal_time_id in payload.meal_time_ids:
+            for meal_id in payload.meal_time_ids:
                 add_menu_item_meal_time_service(db, {
                     "menu_id": menu_id,
-                    "meal_time_id": meal_time_id
+                    "meal_time_id": meal_id
                 })
 
-        # 🔹 PROMOTIONS
         if payload.promotion_ids is not None:
             remove_all_promotions_from_menu_item_service(db, {"menu_id": menu_id})
 
-            for promotion_id in payload.promotion_ids:
+            for promo_id in payload.promotion_ids:
                 add_menu_item_promotion_service(db, {
                     "menu_id": menu_id,
-                    "promotion_id": promotion_id
+                    "promotion_id": promo_id
                 })
 
         db.commit()
 
+        return {"message": "Updated successfully"}
+
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-
 
 def delete_menu_item_service(db, menu_id: int):
     try:

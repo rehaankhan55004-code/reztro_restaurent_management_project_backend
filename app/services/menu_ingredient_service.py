@@ -2,11 +2,15 @@ from fastapi import HTTPException, status
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
 
+def normalize_payload(payload):
+    if payload is None:
+        raise HTTPException(status_code=400, detail="Payload cannot be None")
 
+    return payload if isinstance(payload, dict) else payload.model_dump(exclude_unset=True)
 #  CREATE
 def create_menu_ingredient_service(db, payload):
     try:
-        data = payload if isinstance(payload, dict) else payload.model_dump()
+        data = normalize_payload(payload)
 
         result = db.execute(
             text("""
@@ -80,12 +84,14 @@ def get_menu_ingredient_by_id_service(db, ingredient_id: int):
 #  GET BY MENU ID
 def get_menu_ingredients_by_menu_id_service(db, payload):
     try:
+        data = normalize_payload(payload)
+
         result = db.execute(
             text("""
                 EXEC Reztro.GetMenuIngredientsByMenuId
                     @menu_id=:menu_id
             """),
-            payload.model_dump()
+            data
         )
 
         return result.mappings().all()
@@ -100,10 +106,10 @@ def get_menu_ingredients_by_menu_id_service(db, payload):
 #  UPDATE
 def update_menu_ingredient_service(db, ingredient_id: int, payload):
     try:
-        data = payload if isinstance(payload, dict) else payload.model_dump(exclude_unset=True)
+        data = normalize_payload(payload)
 
         if not data:
-            return None  # nothing to update
+            return None
 
         data["ingredient_id"] = ingredient_id
 
@@ -116,12 +122,9 @@ def update_menu_ingredient_service(db, ingredient_id: int, payload):
             data
         )
 
-        db.commit()
-
         return result.mappings().first()
 
     except SQLAlchemyError as e:
-        db.rollback()
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
@@ -152,12 +155,13 @@ def delete_menu_ingredient_service(db, ingredient_id: int):
 #  DELETE BY MENU ID
 def delete_menu_ingredients_by_menu_id_service(db, payload):
     try:
+        data = normalize_payload(payload)
         result = db.execute(
             text("""
                 EXEC Reztro.DeleteMenuIngredientsByMenuId
                     @menu_id=:menu_id
             """),
-            payload.model_dump()
+            data
         )
 
         return result.mappings().first()

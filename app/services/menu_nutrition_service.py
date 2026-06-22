@@ -116,11 +116,10 @@ def get_menu_nutrition_by_menu_id_service(db, payload):
 #  UPDATE BY NUTRITION ID
 def update_menu_nutrition_service(db, nutrition_id: int, payload):
     try:
-        # ✅ Handle dict + model + partial update
         data = payload if isinstance(payload, dict) else payload.model_dump(exclude_unset=True)
 
         if not data:
-            return None  # nothing to update
+            return None  
 
         data["nutrition_id"] = nutrition_id
 
@@ -166,14 +165,13 @@ def update_menu_nutrition_by_menu_id_service(db, menu_id: int, payload):
             data
         )
 
-        return result.mappings().first()  
+        return result.mappings().first()
 
     except SQLAlchemyError as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(e.orig)
         )
-
 
 def delete_menu_nutrition_service(db, nutrition_id: int):
     try:
