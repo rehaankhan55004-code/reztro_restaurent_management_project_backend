@@ -319,7 +319,7 @@ def update_menu_item_service(db, menu_id: int, payload):
 
             db.execute(
                 text("""
-                    EXEC Reztro.RemoveAllCategoriesFromMenuItem
+                    EXEC Reztro.DeleteMenuItemCategories
                         @menu_id=:menu_id
                 """),
                 {"menu_id": menu_id}
@@ -567,3 +567,18 @@ def get_top_rated_menu_items_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
+
+def get_menu_order_overview_service(db, menu_id: int, filter_type: str):
+    result = db.execute(
+        text("""
+            EXEC Reztro.GetMenuOrderOverview
+                @menu_id=:menu_id,
+                @filter_type=:filter_type
+        """),
+        {
+            "menu_id": menu_id,
+            "filter_type": filter_type
+        }
+    )
+
+    return [dict(row._mapping) for row in result]

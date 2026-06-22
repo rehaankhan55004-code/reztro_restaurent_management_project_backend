@@ -22,6 +22,7 @@ from app.services.menu_service import (
     update_menu_stats_service,
     get_featured_menu_items_service,
     get_top_rated_menu_items_service,
+    get_menu_order_overview_service
 )
 
 router = APIRouter(prefix="/menu-items", tags=["Menu Items"])
@@ -230,3 +231,16 @@ def get_top_rated_menu_items(db=Depends(get_db)):
     items = get_top_rated_menu_items_service(db)
 
     return {"success": True, "count": len(items), "data": items}
+
+@router.get("/{menu_id}/orders-overview")
+def get_menu_order_overview(
+    menu_id: int,
+    filter: str = "week",
+    db=Depends(get_db)
+):
+    data = get_menu_order_overview_service(db, menu_id, filter)
+
+    return {
+        "success": True,
+        "data": data
+    }
