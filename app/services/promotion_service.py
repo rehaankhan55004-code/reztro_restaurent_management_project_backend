@@ -22,7 +22,8 @@ def create_promotion_service(db, payload):
             payload.model_dump()
         )
 
-        promotion = result.mappings().first()
+        rows = result.mappings().all()
+        promotion = rows[0] if rows else None
 
         db.commit()
 
@@ -57,7 +58,8 @@ def get_promotion_by_id_service(db, promotion_id):
         {"promotion_id": promotion_id}
     )
 
-    return result.mappings().first()
+    rows = result.mappings().all()
+    return rows[0] if rows else None
 
 
 def get_promotion_by_code_service(db, promotion_code):
@@ -70,7 +72,8 @@ def get_promotion_by_code_service(db, promotion_code):
         {"promotion_code": promotion_code}
     )
 
-    return result.mappings().first()
+    rows = result.mappings().all()
+    return rows[0] if rows else None
 
 
 def get_active_promotions_service(db):
@@ -109,7 +112,8 @@ def update_promotion_service(
             }
         )
 
-        promotion = result.mappings().first()
+        rows = result.mappings().all()
+        promotion = rows[0] if rows else None
 
         db.commit()
 
@@ -140,9 +144,12 @@ def delete_promotion_service(
             {"promotion_id": promotion_id}
         )
 
+        rows = result.mappings().all()
+        data = rows[0] if rows else None
+
         db.commit()
 
-        return result.mappings().first()
+        return data
 
     except SQLAlchemyError as e:
 
@@ -154,11 +161,7 @@ def delete_promotion_service(
         )
 
 
-def restore_promotion_service(
-    db,
-    promotion_id
-):
-
+def restore_promotion_service(db, promotion_id):
     try:
 
         result = db.execute(
@@ -169,16 +172,17 @@ def restore_promotion_service(
             {"promotion_id": promotion_id}
         )
 
+        rows = result.mappings().all()
+        data = rows[0] if rows else None
+
         db.commit()
 
-        return result.mappings().first()
+        return data
 
     except SQLAlchemyError as e:
-
         db.rollback()
-
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail=str(e.orig)
         )
 
@@ -197,4 +201,5 @@ def calculate_promotion_discount_service(
         payload.model_dump()
     )
 
-    return result.mappings().first()
+    rows = result.mappings().all()
+    return rows[0] if rows else None

@@ -22,7 +22,10 @@ from app.routes import (
     menu_nutrition,
     review,
     activity_log,
-    purchase_order
+    purchase_order,
+    inventory_item,
+    inventory_category,
+    inventory_stock_history
 )
 from app.utils import cloudinary as cloudinary_router  
 
@@ -58,4 +61,7 @@ app.include_router(menu_nutrition.router)
 app.include_router(review.router)
 app.include_router(activity_log.router)
 app.include_router(purchase_order.router)
+app.include_router(inventory_item.router)
+app.include_router(inventory_category.router)
+app.include_router(inventory_stock_history.router)
 app.include_router(cloudinary_router.router)  
