@@ -27,7 +27,7 @@ router = APIRouter(
 )
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("", status_code=status.HTTP_201_CREATED)
 def create_inventory_item(
     payload: InventoryItemCreate,
     db: Session = Depends(get_db)
@@ -41,7 +41,7 @@ def create_inventory_item(
     }
 
 
-@router.get("/")
+@router.get("")
 def get_inventory_items(db: Session = Depends(get_db)):
 
     data = get_inventory_items_service(db)
@@ -49,6 +49,55 @@ def get_inventory_items(db: Session = Depends(get_db)):
     return {
         "success": True,
         "data": data
+    }
+
+@router.get("/low-stock")
+def get_low_stock_items(db: Session = Depends(get_db)):
+
+    data = get_low_stock_inventory_service(db)
+
+    return {
+        "success": True,
+        "data": data
+    }
+
+
+@router.get("/summary")
+def get_inventory_summary(db: Session = Depends(get_db)):
+
+    data = get_inventory_summary_service(db)
+
+    return {
+        "success": True,
+        "data": data
+    }
+
+
+@router.patch("/{inventory_id}/stock")
+def update_inventory_stock(
+    inventory_id: int,
+    payload: InventoryStockUpdate,
+    db: Session = Depends(get_db)
+):
+    data = update_inventory_stock_service(db, inventory_id, payload)
+
+    return {
+        "success": True,
+        "message": "Stock updated successfully",
+        "data": data
+    }
+
+
+@router.patch("/{inventory_id}/restore")
+def restore_inventory_item(
+    inventory_id: int,
+    db: Session = Depends(get_db)
+):
+    restore_inventory_item_service(db, inventory_id)
+
+    return {
+        "success": True,
+        "message": "Inventory item restored successfully"
     }
 
 
@@ -80,21 +129,6 @@ def update_inventory_item(
     }
 
 
-@router.patch("/{inventory_id}/stock")
-def update_inventory_stock(
-    inventory_id: int,
-    payload: InventoryStockUpdate,
-    db: Session = Depends(get_db)
-):
-    data = update_inventory_stock_service(db, inventory_id, payload)
-
-    return {
-        "success": True,
-        "message": "Stock updated successfully",
-        "data": data
-    }
-
-
 @router.delete("/{inventory_id}")
 def delete_inventory_item(
     inventory_id: int,
@@ -105,39 +139,4 @@ def delete_inventory_item(
     return {
         "success": True,
         "message": "Inventory item deleted successfully"
-    }
-
-
-@router.patch("/{inventory_id}/restore")
-def restore_inventory_item(
-    inventory_id: int,
-    db: Session = Depends(get_db)
-):
-    restore_inventory_item_service(db, inventory_id)
-
-    return {
-        "success": True,
-        "message": "Inventory item restored successfully"
-    }
-
-
-@router.get("/low-stock")
-def get_low_stock_items(db: Session = Depends(get_db)):
-
-    data = get_low_stock_inventory_service(db)
-
-    return {
-        "success": True,
-        "data": data
-    }
-
-
-@router.get("/summary")
-def get_inventory_summary(db: Session = Depends(get_db)):
-
-    data = get_inventory_summary_service(db)
-
-    return {
-        "success": True,
-        "data": data
     }

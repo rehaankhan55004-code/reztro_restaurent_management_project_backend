@@ -26,6 +26,7 @@ router = APIRouter(
     tags=["Purchase Orders"]
 )
 
+
 @router.post("")
 def create_purchase_order(
     payload: PurchaseOrderCreate,
@@ -40,6 +41,7 @@ def create_purchase_order(
         "data": order
     }
 
+
 @router.get("")
 def get_purchase_orders(
     db=Depends(get_db)
@@ -53,39 +55,32 @@ def get_purchase_orders(
         "data": data
     }
 
-@router.get("/{purchase_order_id}")
-def get_purchase_order_by_id(
-    purchase_order_id: int,
+
+@router.get("/summary")
+def get_purchase_order_summary(
     db=Depends(get_db)
 ):
 
-    order = get_purchase_order_by_id_service(
-        db,
-        purchase_order_id
-    )
+    data = get_purchase_order_summary_service(db)
 
     return {
         "success": True,
-        "data": order
+        "data": data
     }
 
-@router.put("/{purchase_order_id}")
-def update_purchase_order(
-    purchase_order_id: int,
-    payload: PurchaseOrderUpdate,
+
+@router.get("/chart")
+def get_purchase_order_chart(
     db=Depends(get_db)
 ):
 
-    update_purchase_order_service(
-        db,
-        purchase_order_id,
-        payload
-    )
+    data = get_purchase_order_chart_service(db)
 
     return {
         "success": True,
-        "message": "Purchase order updated successfully"
+        "data": data
     }
+
 
 @router.patch("/{purchase_order_id}/status")
 def update_purchase_order_status(
@@ -105,6 +100,7 @@ def update_purchase_order_status(
         "message": "Status updated successfully"
     }
 
+
 @router.patch("/{purchase_order_id}/deliver")
 def mark_purchase_order_delivered(
     purchase_order_id: int,
@@ -117,6 +113,43 @@ def mark_purchase_order_delivered(
         "message": "Purchase order marked as delivered",
         "data": data
     }
+
+
+@router.get("/{purchase_order_id}")
+def get_purchase_order_by_id(
+    purchase_order_id: int,
+    db=Depends(get_db)
+):
+
+    order = get_purchase_order_by_id_service(
+        db,
+        purchase_order_id
+    )
+
+    return {
+        "success": True,
+        "data": order
+    }
+
+
+@router.put("/{purchase_order_id}")
+def update_purchase_order(
+    purchase_order_id: int,
+    payload: PurchaseOrderUpdate,
+    db=Depends(get_db)
+):
+
+    update_purchase_order_service(
+        db,
+        purchase_order_id,
+        payload
+    )
+
+    return {
+        "success": True,
+        "message": "Purchase order updated successfully"
+    }
+
 
 @router.delete("/{purchase_order_id}")
 def delete_purchase_order(
@@ -132,28 +165,4 @@ def delete_purchase_order(
     return {
         "success": True,
         "message": "Purchase order deleted successfully"
-    }
-
-@router.get("/summary")
-def get_purchase_order_summary(
-    db=Depends(get_db)
-):
-
-    data = get_purchase_order_summary_service(db)
-
-    return {
-        "success": True,
-        "data": data
-    }
-
-@router.get("/chart")
-def get_purchase_order_chart(
-    db=Depends(get_db)
-):
-
-    data = get_purchase_order_chart_service(db)
-
-    return {
-        "success": True,
-        "data": data
     }

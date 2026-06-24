@@ -14,7 +14,8 @@ from app.services.inventory_stock_history_service import (
     get_stock_history_by_inventory_service,
     get_stock_summary_service,
     get_stock_chart_service,
-    delete_stock_history_service
+    delete_stock_history_service,
+    restore_stock_history_service
 )
 
 router = APIRouter(
@@ -49,30 +50,6 @@ def get_stock_history(
     }
 
 
-# 🔹 GET BY ID
-@router.get("/{stock_history_id}")
-def get_stock_history_by_id(
-    stock_history_id: int,
-    db: Session = Depends(get_db)
-):
-    return {
-        "success": True,
-        "data": get_stock_history_by_id_service(db, stock_history_id)
-    }
-
-
-# 🔹 GET BY INVENTORY ID
-@router.get("/inventory/{inventory_id}")
-def get_stock_history_by_inventory(
-    inventory_id: int,
-    db: Session = Depends(get_db)
-):
-    return {
-        "success": True,
-        "data": get_stock_history_by_inventory_service(db, inventory_id)
-    }
-
-
 # 🔹 GET SUMMARY
 @router.get("/summary")
 def get_stock_summary(
@@ -92,6 +69,45 @@ def get_stock_chart(
     return {
         "success": True,
         "data": get_stock_chart_service(db)
+    }
+
+
+# 🔹 GET BY INVENTORY ID
+@router.get("/inventory/{inventory_id}")
+def get_stock_history_by_inventory(
+    inventory_id: int,
+    db: Session = Depends(get_db)
+):
+    return {
+        "success": True,
+        "data": get_stock_history_by_inventory_service(db, inventory_id)
+    }
+
+
+# 🔹 RESTORE HISTORY
+@router.patch("/{stock_history_id}/restore")
+def restore_stock_history(
+    stock_history_id: int,
+    db: Session = Depends(get_db)
+):
+    result = restore_stock_history_service(db, stock_history_id)
+
+    return {
+        "success": True,
+        "message": "Stock history restored successfully",
+        "data": result
+    }
+
+
+# 🔹 GET BY ID
+@router.get("/{stock_history_id}")
+def get_stock_history_by_id(
+    stock_history_id: int,
+    db: Session = Depends(get_db)
+):
+    return {
+        "success": True,
+        "data": get_stock_history_by_id_service(db, stock_history_id)
     }
 
 

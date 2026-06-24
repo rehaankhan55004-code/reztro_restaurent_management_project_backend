@@ -25,13 +25,29 @@ router = APIRouter(
 
 
 #  CREATE REVIEW
-@router.post("/")
+@router.post("")
 def create_review(
     payload: ReviewCreateSchema,
     db: Session = Depends(get_db)
 ):
     create_review_service(db, payload)
     return {"message": "Review added successfully"}
+
+
+#  REVIEW SUMMARY 
+@router.get("/summary")
+def get_review_summary(
+    db: Session = Depends(get_db)
+):
+    return get_review_summary_service(db)
+
+
+#  REVIEW STATISTICS 
+@router.get("/statistics")
+def get_review_statistics(
+    db: Session = Depends(get_db)
+):
+    return get_review_statistics_service(db)
 
 
 #  GET ALL REVIEWS BY MENU ID
@@ -71,19 +87,3 @@ def delete_review(
 ):
     delete_review_service(db, review_id)
     return {"message": "Review deleted successfully"}
-
-
-#  REVIEW SUMMARY (analytics)
-@router.get("/summary")
-def get_review_summary(
-    db: Session = Depends(get_db)
-):
-    return get_review_summary_service(db)
-
-
-#  REVIEW STATISTICS (rating distribution)
-@router.get("/statistics")
-def get_review_statistics(
-    db: Session = Depends(get_db)
-):
-    return get_review_statistics_service(db)

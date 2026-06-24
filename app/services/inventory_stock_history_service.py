@@ -205,3 +205,39 @@ def delete_stock_history_service(db, stock_history_id: int):
             status_code=status.HTTP_400_BAD_REQUEST,
             detail=str(getattr(e, "orig", e))
         )
+
+# 🔹 RESTORE STOCK HISTORY
+def restore_stock_history_service(db, stock_history_id: int):
+    try:
+        result = db.execute(
+            text("""
+                EXEC Reztro.RestoreInventoryStockHistory
+                    @stock_history_id=:stock_history_id
+            """),
+            {"stock_history_id": stock_history_id}
+        )
+
+        data = safe_fetch_one(result)
+
+        db.commit()
+
+        if not data:
+            raise HTTPException(
+                status_code=400,
+                detail="Restore failed"
+            )
+
+        if data.get("success") == 0:
+            raise HTTPException(
+                status_code=400,
+                detail=data.get("message")
+            )
+
+        return data
+
+    except SQLAlchemyError as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=400,
+            detail=str(getattr(e, "orig", e))
+        )

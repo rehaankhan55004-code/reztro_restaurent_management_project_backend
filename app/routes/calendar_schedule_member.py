@@ -24,7 +24,7 @@ router = APIRouter(
 )
 
 
-#  CREATE
+# 🔹 CREATE
 @router.post("")
 def create_schedule_member(
     payload: CreateCalendarScheduleMemberSchema,
@@ -39,7 +39,7 @@ def create_schedule_member(
     }
 
 
-# GET ALL
+# 🔹 GET ALL
 @router.get("")
 def get_schedule_members(
     db: Session = Depends(get_db)
@@ -50,7 +50,23 @@ def get_schedule_members(
     }
 
 
-# GET BY SCHEDULE
+# 🔹 STATIC / FIXED FIRST
+# 🔹 DELETE BY SCHEDULE
+@router.delete("/schedule/{schedule_id}")
+def delete_members_by_schedule(
+    schedule_id: int,
+    db: Session = Depends(get_db)
+):
+    result = delete_members_by_schedule_service(db, schedule_id)
+
+    return {
+        "success": True,
+        "message": "All members deleted successfully",
+        "data": result
+    }
+
+
+# 🔹 GET BY SCHEDULE
 @router.get("/schedule/{schedule_id}")
 def get_members_by_schedule(
     schedule_id: int,
@@ -62,7 +78,8 @@ def get_members_by_schedule(
     }
 
 
-# GET BY ID
+# 🔹 DYNAMIC LAST
+# 🔹 GET BY ID
 @router.get("/{schedule_member_id}")
 def get_schedule_member_by_id(
     schedule_member_id: int,
@@ -74,7 +91,7 @@ def get_schedule_member_by_id(
     }
 
 
-# UPDATE
+# 🔹 UPDATE
 @router.put("/{schedule_member_id}")
 def update_schedule_member(
     schedule_member_id: int,
@@ -90,7 +107,7 @@ def update_schedule_member(
     }
 
 
-#DELETE SINGLE
+# 🔹 DELETE SINGLE
 @router.delete("/{schedule_member_id}")
 def delete_schedule_member(
     schedule_member_id: int,
@@ -101,20 +118,5 @@ def delete_schedule_member(
     return {
         "success": True,
         "message": "Member deleted successfully",
-        "data": result
-    }
-
-
-#  DELETE BY SCHEDULE
-@router.delete("/schedule/{schedule_id}")
-def delete_members_by_schedule(
-    schedule_id: int,
-    db: Session = Depends(get_db)
-):
-    result = delete_members_by_schedule_service(db, schedule_id)
-
-    return {
-        "success": True,
-        "message": "All members deleted successfully",
         "data": result
     }

@@ -52,6 +52,24 @@ def get_inventory_categories(
     }
 
 
+# 🔹 RESTORE 
+@router.patch("/{inventory_category_id}/restore")
+def restore_inventory_category(
+    inventory_category_id: int,
+    db=Depends(get_db)
+):
+    data = restore_inventory_category_service(
+        db,
+        inventory_category_id
+    )
+
+    return {
+        "success": True,
+        "message": "Category restored successfully",
+        "data": data
+    }
+
+
 # 🔹 GET BY ID
 @router.get("/{inventory_category_id}")
 def get_inventory_category_by_id(
@@ -103,23 +121,5 @@ def delete_inventory_category(
     return {
         "success": True,
         "message": "Category deleted successfully",
-        "data": data
-    }
-
-
-# 🔹 RESTORE
-@router.patch("/{inventory_category_id}/restore")
-def restore_inventory_category(
-    inventory_category_id: int,
-    db=Depends(get_db)
-):
-    data = restore_inventory_category_service(
-        db,
-        inventory_category_id
-    )
-
-    return {
-        "success": True,
-        "message": "Category restored successfully",
         "data": data
     }

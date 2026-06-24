@@ -52,7 +52,7 @@ def get_calendar_schedules(
     }
 
 
-# 🔹 GET UPCOMING 
+# 🔹 GET UPCOMING
 @router.get("/upcoming")
 def get_upcoming_calendar_schedules(
     db: Session = Depends(get_db)
@@ -72,6 +72,21 @@ def get_calendar_schedules_by_date(
     return {
         "success": True,
         "data": get_calendar_schedules_by_date_service(db, schedule_date)
+    }
+
+
+# 🔹 RESTORE
+@router.patch("/restore/{schedule_id}")
+def restore_calendar_schedule(
+    schedule_id: int,
+    db: Session = Depends(get_db)
+):
+    result = restore_calendar_schedule_service(db, schedule_id)
+
+    return {
+        "success": True,
+        "message": "Schedule restored successfully",
+        "data": result
     }
 
 
@@ -103,7 +118,7 @@ def update_calendar_schedule(
     }
 
 
-#  DELETE (soft)
+# 🔹 DELETE (soft)
 @router.delete("/{schedule_id}")
 def delete_calendar_schedule(
     schedule_id: int,
@@ -114,20 +129,5 @@ def delete_calendar_schedule(
     return {
         "success": True,
         "message": "Schedule deleted successfully",
-        "data": result
-    }
-
-
-# RESTORE
-@router.patch("/restore/{schedule_id}")
-def restore_calendar_schedule(
-    schedule_id: int,
-    db: Session = Depends(get_db)
-):
-    result = restore_calendar_schedule_service(db, schedule_id)
-
-    return {
-        "success": True,
-        "message": "Schedule restored successfully",
         "data": result
     }
