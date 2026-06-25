@@ -2,8 +2,6 @@ from fastapi import APIRouter, Depends, UploadFile, File, Form
 from app.db.database import get_db
 
 from app.schemas.driver_schemas import (
-    DriverCreate,   
-    DriverUpdate,
     DriverStatusUpdate
 )
 

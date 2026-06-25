@@ -198,3 +198,34 @@ def delete_members_by_schedule_service(db, schedule_id: int):
             status_code=400,
             detail=str(getattr(e, "orig", e))
         )
+        
+def restore_schedule_member_service(db, schedule_member_id: int):
+    try:
+        result = db.execute(
+            text("""
+                EXEC Reztro.RestoreCalendarScheduleMember
+                    @schedule_member_id=:schedule_member_id
+            """),
+            {
+                "schedule_member_id": schedule_member_id
+            }
+        )
+
+        data = safe_fetch_one(result)
+        db.commit()
+
+        if data and data.get("success") == 0:
+            raise HTTPException(
+                status_code=400,
+                detail=data.get("message")
+            )
+
+        return data
+
+    except SQLAlchemyError as e:
+        db.rollback()
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(getattr(e, "orig", e))
+        )

@@ -126,21 +126,19 @@ def create_order_service(
             )
  
         # ONLINE DETAILS
- 
         if (
             payload.order_type == "Online"
             and payload.online_details
         ):
- 
+
             estimated_arrival_time = (
                 datetime.now() + timedelta(minutes=30)
             )
- 
-            db.execute(
+
+            result = db.execute(
                 text("""
                     EXEC Reztro.AddOnlineOrderDetails
                         @order_id=:order_id,
-                        @driver_id=:driver_id,
                         @delivery_address=:delivery_address,
                         @delivery_latitude=:delivery_latitude,
                         @delivery_longitude=:delivery_longitude,
@@ -152,10 +150,30 @@ def create_order_service(
                 """),
                 {
                     "order_id": order_id,
-                    **payload.online_details.model_dump(),
+                    "delivery_address": payload.online_details.delivery_address,
+                    "delivery_latitude": payload.online_details.delivery_latitude,
+                    "delivery_longitude": payload.online_details.delivery_longitude,
+                    "restaurant_address": payload.online_details.restaurant_address,
+                    "restaurant_latitude": payload.online_details.restaurant_latitude,
+                    "restaurant_longitude": payload.online_details.restaurant_longitude,
+                    "delivery_time": payload.online_details.delivery_time,
                     "estimated_arrival_time": estimated_arrival_time
                 }
             )
+
+            online_order = result.mappings().first()
+
+            if online_order:
+
+                db.execute(
+                    text("""
+                        EXEC Reztro.AutoAssignDriverToOnlineOrder
+                            @online_id=:online_id
+                    """),
+                    {
+                        "online_id": online_order["online_id"]
+                    }
+                )
  
         # PAYMENT
  

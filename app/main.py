@@ -27,7 +27,8 @@ from app.routes import (
     inventory_category,
     inventory_stock_history,
     calendar_schedule,
-    calendar_schedule_member
+    calendar_schedule_member,
+    message
 )
 from app.utils import cloudinary as cloudinary_router  
 
@@ -68,4 +69,5 @@ app.include_router(inventory_category.router)
 app.include_router(inventory_stock_history.router)
 app.include_router(calendar_schedule.router)
 app.include_router(calendar_schedule_member.router)
+app.include_router(message.router)
 app.include_router(cloudinary_router.router)  

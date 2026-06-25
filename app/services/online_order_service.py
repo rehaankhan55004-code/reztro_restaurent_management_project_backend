@@ -204,3 +204,46 @@ def assign_driver_service(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
+        
+def auto_assign_driver_service(
+    db,
+    online_id
+):
+
+    try:
+
+        db.execute(
+            text("""
+                EXEC Reztro.AutoAssignDriverToOnlineOrder
+                    @online_id=:online_id
+            """),
+            {
+                "online_id": online_id
+            }
+        )
+
+        db.commit()
+
+    except SQLAlchemyError as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e.orig)
+        )
+def get_online_order_driver_details_service(
+    db,
+    order_id
+):
+    result = db.execute(
+        text("""
+            EXEC Reztro.GetOnlineOrderDriverDetails
+                @order_id=:order_id
+        """),
+        {
+            "order_id": order_id
+        }
+    )
+
+    return result.mappings().first()

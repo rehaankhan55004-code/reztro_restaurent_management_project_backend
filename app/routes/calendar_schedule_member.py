@@ -15,7 +15,8 @@ from app.services.calendar_schedule_member_service import (
     get_members_by_schedule_service,
     update_schedule_member_service,
     delete_schedule_member_service,
-    delete_members_by_schedule_service
+    delete_members_by_schedule_service,
+    restore_schedule_member_service
 )
 
 router = APIRouter(
@@ -50,7 +51,6 @@ def get_schedule_members(
     }
 
 
-# 🔹 STATIC / FIXED FIRST
 # 🔹 DELETE BY SCHEDULE
 @router.delete("/schedule/{schedule_id}")
 def delete_members_by_schedule(
@@ -62,6 +62,21 @@ def delete_members_by_schedule(
     return {
         "success": True,
         "message": "All members deleted successfully",
+        "data": result
+    }
+@router.patch("/restore/{schedule_member_id}")
+def restore_schedule_member(
+    schedule_member_id: int,
+    db: Session = Depends(get_db)
+):
+    result = restore_schedule_member_service(
+        db,
+        schedule_member_id
+    )
+
+    return {
+        "success": True,
+        "message": "Member restored successfully",
         "data": result
     }
 
@@ -120,3 +135,5 @@ def delete_schedule_member(
         "message": "Member deleted successfully",
         "data": result
     }
+
+# RESTORE

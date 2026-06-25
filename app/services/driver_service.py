@@ -25,7 +25,7 @@ def create_driver_service(
                     @vehicle_number=:vehicle_number,
                     @status=:status
             """),
-            payload.model_dump()
+            payload
         )
 
         db.commit()
@@ -121,7 +121,7 @@ def update_driver_service(
             """),
             {
                 "driver_id": driver_id,
-                **payload.model_dump()
+                **payload
             }
         )
 
