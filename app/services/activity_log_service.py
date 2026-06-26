@@ -19,8 +19,11 @@ def create_activity_log_service(db, payload):
             payload.model_dump()
         )
 
+        response = result.mappings().first()
+
         db.commit()
-        return result.mappings().first()
+
+        return response
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -28,7 +31,6 @@ def create_activity_log_service(db, payload):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=str(e.orig)
         )
-
 
 # GET ALL
 def get_activity_logs_service(db):
@@ -127,8 +129,11 @@ def update_activity_log_service(db, activity_id: int, payload):
             params
         )
 
+        response = result.mappings().first()
+
         db.commit()
-        return result.mappings().first()
+
+        return response
 
     except SQLAlchemyError as e:
         db.rollback()
@@ -143,8 +148,11 @@ def delete_activity_log_service(db, activity_id: int):
             {"activity_id": activity_id}
         )
 
+        response = result.mappings().first()
+
         db.commit()
-        return result.mappings().first()
+
+        return response
 
     except SQLAlchemyError as e:
         db.rollback()
