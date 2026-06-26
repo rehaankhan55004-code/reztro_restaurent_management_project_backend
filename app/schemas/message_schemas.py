@@ -9,19 +9,18 @@ class CreateMessageSchema(BaseModel):
     sender_id: str = Field(..., min_length=1, max_length=50)
     sender_type: str = Field(..., min_length=1, max_length=50)
 
-    message_type: str = Field(default="text", min_length=1, max_length=50)
-    message_text: str = Field(default="text",
-        pattern="^(text|image|file)$")
+    message_type: str = Field(default="text", pattern="^(text|image|file)$")
+
+    message_text: str = Field(..., min_length=1)
 
     attachment_url: Optional[str] = Field(default=None, max_length=500)
     attachment_type: Optional[str] = Field(default=None, max_length=100)
 
 
 class UpdateMessageSchema(BaseModel):
-    message_text: str = Field(default="text",
-        pattern="^(text|image|file)$")
+    message_type: str = Field(default="text", pattern="^(text|image|file)$")
 
-    message_type: str = Field(default="text", min_length=1, max_length=50)
+    message_text: str = Field(..., min_length=1)
 
     attachment_url: Optional[str] = Field(default=None, max_length=500)
     attachment_type: Optional[str] = Field(default=None, max_length=100)

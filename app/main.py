@@ -32,6 +32,9 @@ from app.routes import (
     message_conversation,
 )
 from app.utils import cloudinary as cloudinary_router  
+from app.websocket.chat_socket import router as websocket_router
+
+
 
 app = FastAPI()
 
@@ -42,7 +45,8 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-         
+
+app.include_router(websocket_router)
 app.include_router(customer.router)
 app.include_router(orders.router)
 app.include_router(menu.router)

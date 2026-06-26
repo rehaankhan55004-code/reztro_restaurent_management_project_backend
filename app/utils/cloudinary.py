@@ -25,7 +25,8 @@ router = APIRouter(
 
 def upload_to_cloudinary(file_or_url, folder: str = "reztro"):
     try:
-        if isinstance(file_or_url, UploadFile):
+
+        if hasattr(file_or_url, "file"):
 
             if file_or_url.content_type not in ALLOWED_TYPES:
                 raise HTTPException(
@@ -52,8 +53,8 @@ def upload_to_cloudinary(file_or_url, folder: str = "reztro"):
             )
 
         return {
-            "url": result.get("secure_url"),
-            "public_id": result.get("public_id")
+            "url": result["secure_url"],
+            "public_id": result["public_id"]
         }
 
     except HTTPException:
@@ -62,7 +63,7 @@ def upload_to_cloudinary(file_or_url, folder: str = "reztro"):
     except Exception as e:
         raise HTTPException(
             status_code=500,
-            detail=f"Upload failed: {str(e)}"
+            detail=f"Upload failed: {e}"
         )
 
 
