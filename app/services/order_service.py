@@ -1,7 +1,4 @@
-from fastapi import (
-    HTTPException,
-    status
-)
+from fastapi import HTTPException, status
 
 from sqlalchemy import text
 from sqlalchemy.exc import SQLAlchemyError
@@ -9,42 +6,37 @@ from datetime import datetime, timedelta
 
 # ORDERS
 
-def create_order_service(
-    db,
-    payload
-):
- 
+
+def create_order_service(db, payload):
+
     try:
- 
+
         # CREATE ORDER
- 
+
         result = db.execute(
             text("""
                 EXEC Reztro.CreateOrder
                     @customer_id=:customer_id,
                     @order_type=:order_type
             """),
-            {
-                "customer_id": payload.customer_id,
-                "order_type": payload.order_type
-            }
+            {"customer_id": payload.customer_id, "order_type": payload.order_type},
         )
- 
+
         order = result.mappings().first()
- 
+
         if not order:
- 
+
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Failed to create order"
+                detail="Failed to create order",
             )
- 
+
         order_id = order["order_id"]
- 
+
         # INITIAL ORDER TRACKING FOR ONLINE ORDER
- 
+
         if payload.order_type == "Online":
- 
+
             db.execute(
                 text("""
                     EXEC Reztro.AddOrderTracking
@@ -57,16 +49,16 @@ def create_order_service(
                     "order_id": order_id,
                     "tracking_status": "Order Placed",
                     "tracking_note": "Order has been placed successfully",
-                    "sort_order": 1
-                }
+                    "sort_order": 1,
+                },
             )
- 
+
         # ORDER ITEMS
- 
+
         if payload.items:
- 
+
             for item in payload.items:
- 
+
                 db.execute(
                     text("""
                         EXEC Reztro.AddOrderItem
@@ -79,17 +71,14 @@ def create_order_service(
                         "order_id": order_id,
                         "menu_id": item.menu_id,
                         "quantity": item.quantity,
-                        "notes": item.notes
-                    }
+                        "notes": item.notes,
+                    },
                 )
- 
+
         # DINE IN DETAILS
- 
-        if (
-            payload.order_type == "Dine-In"
-            and payload.dine_in_details
-        ):
- 
+
+        if payload.order_type == "Dine-In" and payload.dine_in_details:
+
             db.execute(
                 text("""
                     EXEC Reztro.AddDineInOrderDetails
@@ -100,17 +89,14 @@ def create_order_service(
                 {
                     "order_id": order_id,
                     "table_no": payload.dine_in_details.table_no,
-                    "guest_count": payload.dine_in_details.guest_count
-                }
+                    "guest_count": payload.dine_in_details.guest_count,
+                },
             )
- 
+
         # TAKEAWAY DETAILS
- 
-        if (
-            payload.order_type == "Takeaway"
-            and payload.takeaway_details
-        ):
- 
+
+        if payload.order_type == "Takeaway" and payload.takeaway_details:
+
             db.execute(
                 text("""
                     EXEC Reztro.AddTakeawayOrderDetails
@@ -121,19 +107,14 @@ def create_order_service(
                 {
                     "order_id": order_id,
                     "pickup_time": payload.takeaway_details.pickup_time,
-                    "pickup_code": payload.takeaway_details.pickup_code
-                }
+                    "pickup_code": payload.takeaway_details.pickup_code,
+                },
             )
- 
-        # ONLINE DETAILS
-        if (
-            payload.order_type == "Online"
-            and payload.online_details
-        ):
 
-            estimated_arrival_time = (
-                datetime.now() + timedelta(minutes=30)
-            )
+        # ONLINE DETAILS
+        if payload.order_type == "Online" and payload.online_details:
+
+            estimated_arrival_time = datetime.now() + timedelta(minutes=30)
 
             result = db.execute(
                 text("""
@@ -157,8 +138,8 @@ def create_order_service(
                     "restaurant_latitude": payload.online_details.restaurant_latitude,
                     "restaurant_longitude": payload.online_details.restaurant_longitude,
                     "delivery_time": payload.online_details.delivery_time,
-                    "estimated_arrival_time": estimated_arrival_time
-                }
+                    "estimated_arrival_time": estimated_arrival_time,
+                },
             )
 
             online_order = result.mappings().first()
@@ -170,74 +151,61 @@ def create_order_service(
                         EXEC Reztro.AutoAssignDriverToOnlineOrder
                             @online_id=:online_id
                     """),
-                    {
-                        "online_id": online_order["online_id"]
-                    }
+                    {"online_id": online_order["online_id"]},
                 )
- 
+
         # PAYMENT
- 
+
         if payload.payment:
- 
+
             db.execute(
                 text("""
-                    EXEC Reztro.AddPayment
-                        @order_id=:order_id,
-                        @payment_method=:payment_method,
-                        @payment_status=:payment_status,
-                        @paid_amount=:paid_amount,
-                        @transaction_id=:transaction_id
-                """),
+        EXEC Reztro.AddPayment
+            @order_id=:order_id,
+            @payment_method=:payment_method,
+            @payment_status=:payment_status,
+            @transaction_id=:transaction_id
+    """),
                 {
                     "order_id": order_id,
                     "payment_method": payload.payment.payment_method,
                     "payment_status": payload.payment.payment_status,
-                    "paid_amount": payload.payment.paid_amount,
-                    "transaction_id": payload.payment.transaction_id
-                }
+                    "transaction_id": payload.payment.transaction_id,
+                },
             )
- 
+
         db.commit()
- 
+
         return order
- 
+
     except HTTPException:
         raise
- 
+
     except SQLAlchemyError as e:
- 
+
         db.rollback()
- 
+
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def get_orders_service(
-    db
-):
+def get_orders_service(db):
 
     try:
 
-        result = db.execute(
-            text("EXEC Reztro.GetOrders")
-        )
+        result = db.execute(text("EXEC Reztro.GetOrders"))
 
         return result.mappings().all()
 
     except SQLAlchemyError as e:
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def get_order_by_id_service(
-    db,
-    order_id: int
-):
+def get_order_by_id_service(db, order_id: int):
 
     try:
 
@@ -246,9 +214,7 @@ def get_order_by_id_service(
                 EXEC Reztro.GetOrderById
                     @order_id=:order_id
             """),
-            {
-                "order_id": order_id
-            }
+            {"order_id": order_id},
         )
 
         order = result.mappings().first()
@@ -256,8 +222,7 @@ def get_order_by_id_service(
         if not order:
 
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
             )
 
         return order
@@ -268,16 +233,11 @@ def get_order_by_id_service(
     except SQLAlchemyError as e:
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def update_order_service(
-    db,
-    order_id,
-    payload
-):
+def update_order_service(db, order_id, payload):
 
     try:
 
@@ -293,8 +253,8 @@ def update_order_service(
                 "order_id": order_id,
                 "customer_id": payload.customer_id,
                 "order_type": payload.order_type,
-                "order_status": payload.order_status
-            }
+                "order_status": payload.order_status,
+            },
         )
 
         db.commit()
@@ -304,16 +264,11 @@ def update_order_service(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def update_order_status_service(
-    db,
-    order_id,
-    payload
-):
+def update_order_status_service(db, order_id, payload):
 
     try:
 
@@ -327,16 +282,13 @@ def update_order_status_service(
             {
                 "order_id": order_id,
                 "order_status": payload.order_status,
-                "tracking_note": payload.tracking_note
-            }
+                "tracking_note": payload.tracking_note,
+            },
         )
 
         # RELEASE RESOURCES WHEN ORDER IS COMPLETED/CANCELLED
 
-        if payload.order_status in [
-            "Completed",
-            "Cancelled"
-        ]:
+        if payload.order_status in ["Completed", "Cancelled"]:
 
             # RELEASE DRIVER (ONLINE ORDER)
 
@@ -345,26 +297,19 @@ def update_order_status_service(
                     EXEC Reztro.GetOnlineOrderDetailsByOrderId
                         @order_id=:order_id
                 """),
-                {
-                    "order_id": order_id
-                }
+                {"order_id": order_id},
             )
 
             online_order = result.mappings().first()
 
-            if (
-                online_order
-                and online_order["driver_id"]
-            ):
+            if online_order and online_order["driver_id"]:
 
                 db.execute(
                     text("""
                         EXEC Reztro.ReleaseDriverFromOnlineOrder
                             @driver_id=:driver_id
                     """),
-                    {
-                        "driver_id": online_order["driver_id"]
-                    }
+                    {"driver_id": online_order["driver_id"]},
                 )
 
             # RELEASE TABLE (DINE-IN ORDER)
@@ -374,9 +319,7 @@ def update_order_status_service(
                     EXEC Reztro.ReleaseDineInTable
                         @order_id=:order_id
                 """),
-                {
-                    "order_id": order_id
-                }
+                {"order_id": order_id},
             )
 
         db.commit()
@@ -386,14 +329,11 @@ def update_order_status_service(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
-    
-def delete_order_service(
-    db,
-    order_id
-):
+
+
+def delete_order_service(db, order_id):
 
     try:
 
@@ -402,9 +342,7 @@ def delete_order_service(
                 EXEC Reztro.DeleteOrder
                     @order_id=:order_id
             """),
-            {
-                "order_id": order_id
-            }
+            {"order_id": order_id},
         )
 
         db.commit()
@@ -414,15 +352,14 @@ def delete_order_service(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
+
+
 # ORDER ITEMS
 
-def add_order_item_service(
-    db,
-    payload
-):
+
+def add_order_item_service(db, payload):
 
     try:
 
@@ -434,7 +371,7 @@ def add_order_item_service(
                     @quantity=:quantity,
                     @notes=:notes
             """),
-            payload.model_dump()
+            payload.model_dump(),
         )
 
         db.commit()
@@ -444,37 +381,28 @@ def add_order_item_service(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def get_order_items_service(
-    db
-):
+def get_order_items_service(db):
 
     try:
 
-        result = db.execute(
-            text("""
+        result = db.execute(text("""
                 EXEC Reztro.GetOrderItems
-            """)
-        )
+            """))
 
         return result.mappings().all()
 
     except SQLAlchemyError as e:
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def get_order_items_by_order_id_service(
-    db,
-    order_id
-):
+def get_order_items_by_order_id_service(db, order_id):
 
     try:
 
@@ -483,9 +411,7 @@ def get_order_items_by_order_id_service(
                 EXEC Reztro.GetOrderItemsByOrderId
                     @order_id=:order_id
             """),
-            {
-                "order_id": order_id
-            }
+            {"order_id": order_id},
         )
 
         return result.mappings().all()
@@ -493,15 +419,11 @@ def get_order_items_by_order_id_service(
     except SQLAlchemyError as e:
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def get_order_item_by_id_service(
-    db,
-    order_item_id
-):
+def get_order_item_by_id_service(db, order_item_id):
 
     try:
 
@@ -510,9 +432,7 @@ def get_order_item_by_id_service(
                 EXEC Reztro.GetOrderItemById
                     @order_item_id=:order_item_id
             """),
-            {
-                "order_item_id": order_item_id
-            }
+            {"order_item_id": order_item_id},
         )
 
         item = result.mappings().first()
@@ -520,8 +440,7 @@ def get_order_item_by_id_service(
         if not item:
 
             raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Order item not found"
+                status_code=status.HTTP_404_NOT_FOUND, detail="Order item not found"
             )
 
         return item
@@ -532,16 +451,11 @@ def get_order_item_by_id_service(
     except SQLAlchemyError as e:
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def update_order_item_service(
-    db,
-    order_item_id,
-    payload
-):
+def update_order_item_service(db, order_item_id, payload):
 
     try:
 
@@ -557,8 +471,8 @@ def update_order_item_service(
                 "order_item_id": order_item_id,
                 "menu_id": payload.menu_id,
                 "quantity": payload.quantity,
-                "notes": payload.notes
-            }
+                "notes": payload.notes,
+            },
         )
 
         db.commit()
@@ -568,15 +482,11 @@ def update_order_item_service(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
 
-def delete_order_item_service(
-    db,
-    order_item_id
-):
+def delete_order_item_service(db, order_item_id):
 
     try:
 
@@ -585,9 +495,7 @@ def delete_order_item_service(
                 EXEC Reztro.DeleteOrderItem
                     @order_item_id=:order_item_id
             """),
-            {
-                "order_item_id": order_item_id
-            }
+            {"order_item_id": order_item_id},
         )
 
         db.commit()
@@ -597,14 +505,11 @@ def delete_order_item_service(
         db.rollback()
 
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=str(e.orig)
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=str(e.orig)
         )
 
-def apply_promotion_service(
-    db,
-    payload
-):
+
+def apply_promotion_service(db, payload):
 
     try:
 
@@ -614,7 +519,7 @@ def apply_promotion_service(
                     @order_id=:order_id,
                     @promotion_code=:promotion_code
             """),
-            payload.model_dump()
+            payload.model_dump(),
         )
 
         promotion = result.mappings().first()
@@ -627,7 +532,4 @@ def apply_promotion_service(
 
         db.rollback()
 
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=str(e.orig)
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e.orig))

@@ -18,7 +18,7 @@ class PaymentCreate(BaseModel):
         "Refunded"
     ] = "Pending"
 
-    paid_amount: float = Field(..., ge=0)
+    # paid_amount: float = Field(..., ge=0)
 
     transaction_id: str | None = None
 
@@ -39,7 +39,7 @@ class PaymentUpdate(BaseModel):
         "Refunded"
     ]
 
-    paid_amount: float = Field(..., ge=0)
+    # paid_amount: float = Field(..., ge=0)
 
     transaction_id: str | None = None
 
