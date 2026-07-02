@@ -14,17 +14,17 @@ from app.security.jwt import verify_token
 
 
 router = APIRouter(
-    prefix="/api/admins",
+    prefix="/admins",
     tags=["Admins"]
 )
 
 
 # ====================== ADMIN ROUTES ======================
 
-@router.post("/")
+@router.post("")
 def register_admin(
     db: Session = Depends(get_db),
-    token: dict = Depends(verify_token)   # Protected
+    token: dict = Depends(verify_token)   
 ):
     """Register admin using data from Cognito token"""
     admin = register_admin_service(db, token)
@@ -37,7 +37,7 @@ def register_admin(
     }
 
 
-@router.get("/")
+@router.get("")
 def get_all_admins(
     db: Session = Depends(get_db),
     _token: dict = Depends(verify_token)
