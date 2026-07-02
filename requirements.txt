@@ -8,3 +8,6 @@ pydantic[email]
 cloudinary 
 python-multipart
 pydantic_settings
+python-jose
+cryptography
+requests

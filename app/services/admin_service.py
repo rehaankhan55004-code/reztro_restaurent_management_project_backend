@@ -10,137 +10,133 @@ def safe_fetch_one(result):
         return None
 
 
-# REGISTER
-
-
-def register_admin_service(db, payload):
+# ====================== REGISTER ADMIN (Using Cognito Token) ======================
+def register_admin_service(db, token: dict):
     try:
+        # Extract data from Cognito token
+        auth_payload = token.get("auth", {})
+        user_payload = token.get("user", {})
 
+        cognito_sub = auth_payload.get("sub")
+        email = user_payload.get("email") or auth_payload.get("username")
+        full_name = user_payload.get("name") or "Admin User"
+
+        if not cognito_sub or not email:
+            raise HTTPException(
+                status_code=400,
+                detail="Invalid token: missing sub or email"
+            )
+
+        # Check if admin already exists
+        existing = db.execute(
+            text("SELECT admin_id FROM Reztro.Admins WHERE cognito_sub = :sub"),
+            {"sub": cognito_sub}
+        ).fetchone()
+
+        if existing:
+            return {
+                "success": True,
+                "message": "Admin already exists",
+                "admin_id": existing[0]
+            }
+
+        # Register new admin
         result = db.execute(
             text("""
                 EXEC Reztro.RegisterAdmin
                     @full_name=:full_name,
                     @email=:email,
                     @password_hash=:password_hash,
-                    @role=:role
+                    @cognito_sub=:cognito_sub,
+                    @role='Admin'
             """),
-            payload.model_dump(),
+            {
+                "full_name": full_name,
+                "email": email,
+                "password_hash": "COGNITO_MANAGED",
+                "cognito_sub": cognito_sub
+            }
         )
 
         response = safe_fetch_one(result)
-
         db.commit()
 
-        return response
+        if response:
+            return {
+                "success": True,
+                "message": "Admin registered successfully",
+                "admin_id": response["admin_id"],
+                "data": response
+            }
+        else:
+            raise HTTPException(status_code=500, detail="Failed to register admin")
 
     except SQLAlchemyError as e:
-
         db.rollback()
-
         raise HTTPException(
             status_code=400,
             detail=str(getattr(e, "orig", e))
         )
 
 
-# GET ALL
-
-
+# ====================== OTHER SERVICES (Improved) ======================
 def get_all_admins_service(db):
     try:
-
-        result = db.execute(
-            text("""
-                EXEC Reztro.GetAllAdmins
-            """)
-        )
-
+        result = db.execute(text("EXEC Reztro.GetAllAdmins"))
         return result.mappings().all()
 
     except SQLAlchemyError as e:
-
         raise HTTPException(
             status_code=500,
             detail=str(getattr(e, "orig", e))
         )
 
 
-# GET BY ID
-
-
 def get_admin_by_id_service(db, admin_id: int):
     try:
-
         result = db.execute(
-            text("""
-                EXEC Reztro.GetAdminById
-                    @admin_id=:admin_id
-            """),
-            {
-                "admin_id": admin_id
-            },
+            text("EXEC Reztro.GetAdminById @admin_id=:admin_id"),
+            {"admin_id": admin_id}
         )
 
         data = safe_fetch_one(result)
 
         if not data:
-            raise HTTPException(
-                status_code=404,
-                detail="Admin not found"
-            )
+            raise HTTPException(status_code=404, detail="Admin not found")
 
         return data
 
     except SQLAlchemyError as e:
-
         raise HTTPException(
             status_code=400,
             detail=str(getattr(e, "orig", e))
         )
-
-
-# GET BY EMAIL
 
 
 def get_admin_by_email_service(db, email: str):
     try:
-
         result = db.execute(
-            text("""
-                EXEC Reztro.GetAdminByEmail
-                    @email=:email
-            """),
-            {
-                "email": email
-            },
+            text("EXEC Reztro.GetAdminByEmail @email=:email"),
+            {"email": email}
         )
 
         data = safe_fetch_one(result)
 
         if not data:
-            raise HTTPException(
-                status_code=404,
-                detail="Admin not found"
-            )
+            raise HTTPException(status_code=404, detail="Admin not found")
 
         return data
 
     except SQLAlchemyError as e:
-
         raise HTTPException(
             status_code=400,
             detail=str(getattr(e, "orig", e))
         )
 
 
-# UPDATE
-
-
 def update_admin_service(db, admin_id: int, payload):
     try:
-
-        params = payload.model_dump()
-
+        params = payload.model_dump(exclude_unset=True)
         params["admin_id"] = admin_id
 
         result = db.execute(
@@ -152,19 +148,19 @@ def update_admin_service(db, admin_id: int, payload):
                     @role=:role,
                     @is_active=:is_active
             """),
-            params,
+            params
         )
 
         response = safe_fetch_one(result)
-
         db.commit()
+
+        if not response:
+            raise HTTPException(status_code=404, detail="Admin not found")
 
         return response
 
     except SQLAlchemyError as e:
-
         db.rollback()
-
         raise HTTPException(
             status_code=400,
             detail=str(getattr(e, "orig", e))
