@@ -3,6 +3,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from jose.utils import base64url_decode
 import requests
+import os
 from dotenv import load_dotenv
 from jose import jwk
 import time
@@ -87,4 +88,28 @@ def verify_token(
 
     except JWTError as e:
         print("JWT ERROR:", str(e))
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+# NEW: For WebSocket token verification
+async def verify_token_from_query(token: str):
+    """Verify token passed via WebSocket query parameter"""
+    try:
+        auth_payload = verify_jwt_token(token)
+
+        if auth_payload.get("token_use") != "access":
+            raise HTTPException(status_code=401, detail="Invalid access token")
+
+        if auth_payload.get("client_id") != CLIENT_ID:
+            raise HTTPException(status_code=401, detail="Invalid client_id")
+
+        if auth_payload.get("iss") != ISSUER:
+            raise HTTPException(status_code=401, detail="Invalid issuer")
+
+        return {
+            "auth": auth_payload,
+            "user": {}
+        }
+
+    except Exception:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
