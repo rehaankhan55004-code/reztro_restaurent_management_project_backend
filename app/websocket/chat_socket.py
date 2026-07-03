@@ -62,7 +62,7 @@ async def websocket_chat(
     except WebSocketDisconnect:
         pass
 
-    except HTTPException as e:   # Token error
+    except HTTPException as e:
         await websocket.close(code=4001, reason=e.detail)
 
     except SQLAlchemyError as e:

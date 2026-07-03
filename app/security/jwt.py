@@ -3,11 +3,11 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
 from jose.utils import base64url_decode
 import requests
-import os
 from dotenv import load_dotenv
 from jose import jwk
 import time
 from app.core.config import settings
+
 
 load_dotenv()
 
@@ -92,24 +92,27 @@ def verify_token(
 
 
 # NEW: For WebSocket token verification
+
+
 async def verify_token_from_query(token: str):
-    """Verify token passed via WebSocket query parameter"""
     try:
         auth_payload = verify_jwt_token(token)
+    except Exception as e:
+        raise HTTPException(status_code=401, detail=f"Token verification failed: {str(e)}")
 
-        if auth_payload.get("token_use") != "access":
-            raise HTTPException(status_code=401, detail="Invalid access token")
+    if auth_payload.get("token_use") != "access":
+        raise HTTPException(status_code=401, detail="Invalid access token")
 
-        if auth_payload.get("client_id") != CLIENT_ID:
-            raise HTTPException(status_code=401, detail="Invalid client_id")
+    if auth_payload.get("client_id") != CLIENT_ID:
+        raise HTTPException(
+            status_code=401, 
+            detail=f"Invalid client_id: got {auth_payload.get('client_id')}, expected {CLIENT_ID}"
+        )
 
-        if auth_payload.get("iss") != ISSUER:
-            raise HTTPException(status_code=401, detail="Invalid issuer")
+    if auth_payload.get("iss") != ISSUER:
+        raise HTTPException(
+            status_code=401, 
+            detail=f"Invalid issuer: got {auth_payload.get('iss')}, expected {ISSUER}"
+        )
 
-        return {
-            "auth": auth_payload,
-            "user": {}
-        }
-
-    except Exception:
-        raise HTTPException(status_code=401, detail="Invalid or expired token")
+    return {"auth": auth_payload, "user": {}}

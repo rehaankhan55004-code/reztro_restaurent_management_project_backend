@@ -1,5 +1,4 @@
 fastapi
-uvicorn
 sqlalchemy
 pydantic
 python-dotenv
@@ -11,3 +10,5 @@ pydantic_settings
 python-jose
 cryptography
 requests
+websockets
+uvicorn[standard]
