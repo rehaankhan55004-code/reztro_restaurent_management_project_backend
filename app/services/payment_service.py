@@ -126,7 +126,6 @@ def update_payment_service(
                     @payment_id=:payment_id,
                     @payment_method=:payment_method,
                     @payment_status=:payment_status,
-                    @paid_amount=:paid_amount,
                     @transaction_id=:transaction_id
             """),
             {

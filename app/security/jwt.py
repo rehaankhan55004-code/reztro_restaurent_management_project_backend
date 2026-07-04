@@ -91,8 +91,7 @@ def verify_token(
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 
-# NEW: For WebSocket token verification
-
+# For WebSocket token verification
 
 async def verify_token_from_query(token: str):
     try:
