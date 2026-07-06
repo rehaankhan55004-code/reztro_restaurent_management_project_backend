@@ -42,11 +42,9 @@ def create_menu_item_service(db, payload):
                     @name=:name,
                     @image_url=:image_url,
                     @price=:price,
-                    @rating=:rating,
                     @description=:description,
                     @values_text=:values_text,
                     @is_featured=:is_featured,
-                    @is_top_rated=:is_top_rated,
                     @is_recommended=:is_recommended,
                     @is_new=:is_new
             """),
@@ -56,7 +54,9 @@ def create_menu_item_service(db, payload):
                 "tag_ids",
                 "meal_time_ids",
                 "promotion_ids",
-                "category_ids"   
+                "category_ids",
+                "rating",           
+                "is_top_rated"      
             })
         )
 
@@ -281,11 +281,9 @@ def update_menu_item_service(db, menu_id: int, payload):
             "name": payload.name if payload.name is not None else existing["name"],
             "image_url": payload.image_url if payload.image_url not in [None, ""] else existing["image_url"],
             "price": payload.price if payload.price is not None else existing["price"],
-            "rating": payload.rating if payload.rating is not None else existing["rating"],
             "description": payload.description if payload.description is not None else existing["description"],
             "values_text": payload.values_text if payload.values_text is not None else existing["values_text"],
             "is_featured": payload.is_featured if payload.is_featured is not None else existing["is_featured"],
-            "is_top_rated": payload.is_top_rated if payload.is_top_rated is not None else existing["is_top_rated"],
             "is_recommended": payload.is_recommended if payload.is_recommended is not None else existing["is_recommended"],
             "is_new": payload.is_new if payload.is_new is not None else existing["is_new"],
         }
@@ -298,11 +296,9 @@ def update_menu_item_service(db, menu_id: int, payload):
                     @name=:name,
                     @image_url=:image_url,
                     @price=:price,
-                    @rating=:rating,
                     @description=:description,
                     @values_text=:values_text,
                     @is_featured=:is_featured,
-                    @is_top_rated=:is_top_rated,
                     @is_recommended=:is_recommended,
                     @is_new=:is_new
             """),
@@ -414,7 +410,7 @@ def update_menu_item_service(db, menu_id: int, payload):
     except Exception as e:
         db.rollback()
         raise HTTPException(status_code=500, detail=str(e))
-
+    
 def delete_menu_item_service(db, menu_id: int):
     try:
 

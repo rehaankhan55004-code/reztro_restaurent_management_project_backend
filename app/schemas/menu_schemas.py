@@ -9,6 +9,7 @@ class Nutrition(BaseModel):
     fats: Optional[int] = None
     carbs: Optional[int] = None
 
+
 class MenuItemCreate(BaseModel):
 
     category_id: int = Field(..., gt=0)
@@ -20,14 +21,11 @@ class MenuItemCreate(BaseModel):
 
     price: Decimal = Field(..., gt=0)
 
-    rating: Decimal = Field(default=0, ge=0, le=5)
-
     description: Optional[str] = Field(None, max_length=1000)
 
     values_text: Optional[str] = Field(None, max_length=500)
 
     is_featured: bool = False
-    is_top_rated: bool = False
     is_recommended: bool = False
     is_new: bool = False
 
@@ -49,14 +47,11 @@ class MenuItemUpdate(BaseModel):
 
     price: Optional[Decimal] = Field(None, gt=0)
 
-    rating: Optional[Decimal] = Field(None, ge=0, le=5)
-
     description: Optional[str] = Field(None, max_length=1000)
 
     values_text: Optional[str] = Field(None, max_length=500)
 
     is_featured: Optional[bool] = None
-    is_top_rated: Optional[bool] = None
     is_recommended: Optional[bool] = None
     is_new: Optional[bool] = None
 
