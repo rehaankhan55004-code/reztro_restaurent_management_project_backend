@@ -17,8 +17,7 @@ def create_review_service(db, payload):
                     @service=:service,
                     @ambiance=:ambiance,
                     @value_for_money=:value_for_money,
-                    @cleanliness=:cleanliness,
-                    @review_type=:review_type
+                    @cleanliness=:cleanliness
             """),
             payload.model_dump()
         )
@@ -33,6 +32,7 @@ def create_review_service(db, payload):
             detail=str(e.orig)
         )
 
+
 def get_all_reviews_service(db):
     try:
         result = db.execute(text("EXEC Reztro.GetReviews"))
@@ -44,6 +44,7 @@ def get_all_reviews_service(db):
             detail=str(e.orig)
         )
         
+
 #  GET REVIEWS BY MENU
 def get_reviews_by_menu_id_service(db, menu_id: int):
     try:
@@ -111,8 +112,7 @@ def update_review_service(db, review_id: int, payload):
                     @service=:service,
                     @ambiance=:ambiance,
                     @value_for_money=:value_for_money,
-                    @cleanliness=:cleanliness,
-                    @review_type=:review_type
+                    @cleanliness=:cleanliness
             """),
             params
         )
