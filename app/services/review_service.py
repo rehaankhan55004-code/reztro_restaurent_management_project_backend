@@ -33,7 +33,17 @@ def create_review_service(db, payload):
             detail=str(e.orig)
         )
 
+def get_all_reviews_service(db):
+    try:
+        result = db.execute(text("EXEC Reztro.GetReviews"))
+        return result.mappings().all()
 
+    except SQLAlchemyError as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=str(e.orig)
+        )
+        
 #  GET REVIEWS BY MENU
 def get_reviews_by_menu_id_service(db, menu_id: int):
     try:

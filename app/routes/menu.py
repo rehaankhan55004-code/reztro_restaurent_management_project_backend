@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form,HTTPException
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
 
 from app.db.database import get_db
 from app.utils.cloudinary import upload_to_cloudinary
@@ -47,7 +47,6 @@ async def create_menu_item(
     category_id: int = Form(...),
     name: str = Form(...),
     price: Decimal = Form(...),
-    rating: Decimal = Form(0),
     description: str | None = Form(None),
     values_text: str | None = Form(None),
     image_url: str | None = Form(None),
@@ -58,14 +57,12 @@ async def create_menu_item(
     promotion_ids: str | None = Form(None),
     category_ids: str | None = Form(None),
     is_featured: bool = Form(False),
-    is_top_rated: bool = Form(False),
     is_recommended: bool = Form(False),
     is_new: bool = Form(False),
     file: UploadFile | None = File(None),
     db=Depends(get_db),
 ):
     final_image_url = image_url
-
 
     if file:
         upload_result = upload_to_cloudinary(file)
@@ -81,7 +78,6 @@ async def create_menu_item(
         name=name,
         image_url=final_image_url,
         price=price,
-        rating=rating,
         description=description,
         values_text=values_text,
         nutrition=safe_json_load(nutrition, None),
@@ -90,7 +86,6 @@ async def create_menu_item(
         meal_time_ids=safe_json_load(meal_time_ids, []),
         promotion_ids=safe_json_load(promotion_ids, []),
         is_featured=is_featured,
-        is_top_rated=is_top_rated,
         is_recommended=is_recommended,
         is_new=is_new,
     )
@@ -121,7 +116,6 @@ async def update_menu_item(
     category_id: int | None = Form(None),
     name: str | None = Form(None),
     price: Decimal | None = Form(None),
-    rating: Decimal | None = Form(None),
     description: str | None = Form(None),
     values_text: str | None = Form(None),
     image_url: str | None = Form(None),
@@ -134,7 +128,6 @@ async def update_menu_item(
     category_ids: str | None = Form(None),
 
     is_featured: bool | None = Form(None),
-    is_top_rated: bool | None = Form(None),
     is_recommended: bool | None = Form(None),
     is_new: bool | None = Form(None),
 
@@ -169,14 +162,12 @@ async def update_menu_item(
     promotion_ids_data = parse_json("promotion_ids", promotion_ids)
     category_ids_data = parse_json("category_ids", category_ids)
 
-
     payload = MenuItemUpdate(
         category_id=category_id,
         category_ids=category_ids_data,
         name=name,
         image_url=final_image_url,
         price=price,
-        rating=rating,
         description=description,
         values_text=values_text,
         nutrition=nutrition_data,
@@ -185,7 +176,6 @@ async def update_menu_item(
         meal_time_ids=meal_time_ids_data,
         promotion_ids=promotion_ids_data,
         is_featured=is_featured,
-        is_top_rated=is_top_rated,
         is_recommended=is_recommended,
         is_new=is_new,
     )
@@ -193,6 +183,7 @@ async def update_menu_item(
     update_menu_item_service(db, menu_id, payload)
 
     return {"success": True, "message": "Menu item updated successfully"}
+
 
 @router.delete("/{menu_id}")
 def delete_menu_item(menu_id: int, db=Depends(get_db)):
@@ -231,6 +222,7 @@ def get_top_rated_menu_items(db=Depends(get_db)):
     items = get_top_rated_menu_items_service(db)
 
     return {"success": True, "count": len(items), "data": items}
+
 
 @router.get("/{menu_id}/orders-overview")
 def get_menu_order_overview(

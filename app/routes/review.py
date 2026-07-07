@@ -15,7 +15,8 @@ from app.services.review_service import (
     update_review_service,
     delete_review_service,
     get_review_summary_service,
-    get_review_statistics_service
+    get_review_statistics_service,
+    get_all_reviews_service
 )
 
 router = APIRouter(
@@ -33,7 +34,16 @@ def create_review(
     create_review_service(db, payload)
     return {"message": "Review added successfully"}
 
-
+@router.get("")
+def get_all_reviews(
+    db: Session = Depends(get_db)
+):
+    reviews = get_all_reviews_service(db)
+    return {
+        "success": True,
+        "count": len(reviews),
+        "data": reviews
+    }
 #  REVIEW SUMMARY 
 @router.get("/summary")
 def get_review_summary(
