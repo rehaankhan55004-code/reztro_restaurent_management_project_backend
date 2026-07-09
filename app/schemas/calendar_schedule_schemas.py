@@ -34,6 +34,7 @@ class UpdateCalendarScheduleSchema(BaseModel):
 class CalendarScheduleResponseSchema(BaseModel):
     schedule_id: int
     admin_id: Optional[int]
+    admin_name: Optional[str] = None
     title: str
     schedule_type: str
     location: Optional[str]
