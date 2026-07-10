@@ -120,7 +120,7 @@ def create_menu_item_service(db, payload):
                     "meal_time_id": meal_time_id
                 })
 
-        if payload.promotion_ids:
+        if payload.promotion_ids and len(payload.promotion_ids) > 0:
             for promotion_id in payload.promotion_ids:
                 add_menu_item_promotion_service(db, {
                     "menu_id": menu_id,
@@ -332,7 +332,6 @@ def update_menu_item_service(db, menu_id: int, payload):
                 )
 
         if payload.nutrition is not None:
-
             nutrition_data = (
                 payload.nutrition
                 if isinstance(payload.nutrition, dict)
@@ -397,11 +396,12 @@ def update_menu_item_service(db, menu_id: int, payload):
         if payload.promotion_ids is not None:
             remove_all_promotions_from_menu_item_service(db, {"menu_id": menu_id})
 
-            for promo_id in payload.promotion_ids:
-                add_menu_item_promotion_service(db, {
-                    "menu_id": menu_id,
-                    "promotion_id": promo_id
-                })
+            if payload.promotion_ids:  # Only add if there are promotions
+                for promo_id in payload.promotion_ids:
+                    add_menu_item_promotion_service(db, {
+                        "menu_id": menu_id,
+                        "promotion_id": promo_id
+                    })
 
         db.commit()
 

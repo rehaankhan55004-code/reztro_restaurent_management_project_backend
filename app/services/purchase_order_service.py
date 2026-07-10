@@ -243,3 +243,4 @@ def get_purchase_order_chart_service(db):
 
     except SQLAlchemyError as e:
         raise HTTPException(500, str(e.orig))
+    

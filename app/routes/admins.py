@@ -19,8 +19,6 @@ router = APIRouter(
 )
 
 
-# ====================== ADMIN ROUTES ======================
-
 @router.post("")
 def register_admin(
     db: Session = Depends(get_db),

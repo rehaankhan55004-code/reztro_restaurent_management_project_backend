@@ -26,7 +26,7 @@ router = APIRouter(
 )
 
 
-# 🔹 CREATE
+# CREATE
 @router.post("")
 def create_calendar_schedule(
     payload: CreateCalendarScheduleSchema,
@@ -41,7 +41,7 @@ def create_calendar_schedule(
     }
 
 
-# 🔹 GET ALL
+# GET ALL
 @router.get("")
 def get_calendar_schedules(
     db: Session = Depends(get_db)
@@ -52,7 +52,7 @@ def get_calendar_schedules(
     }
 
 
-# 🔹 GET UPCOMING
+# GET UPCOMING
 @router.get("/upcoming")
 def get_upcoming_calendar_schedules(
     db: Session = Depends(get_db)
@@ -63,7 +63,7 @@ def get_upcoming_calendar_schedules(
     }
 
 
-# 🔹 GET BY DATE
+# GET BY DATE
 @router.get("/date/{schedule_date}")
 def get_calendar_schedules_by_date(
     schedule_date: date,
@@ -75,7 +75,7 @@ def get_calendar_schedules_by_date(
     }
 
 
-# 🔹 RESTORE
+# RESTORE
 @router.patch("/restore/{schedule_id}")
 def restore_calendar_schedule(
     schedule_id: int,
@@ -90,7 +90,7 @@ def restore_calendar_schedule(
     }
 
 
-# 🔹 GET BY ID
+# GET BY ID
 @router.get("/{schedule_id}")
 def get_calendar_schedule_by_id(
     schedule_id: int,
@@ -102,7 +102,7 @@ def get_calendar_schedule_by_id(
     }
 
 
-# 🔹 UPDATE
+# UPDATE
 @router.put("/{schedule_id}")
 def update_calendar_schedule(
     schedule_id: int,
@@ -118,7 +118,7 @@ def update_calendar_schedule(
     }
 
 
-# 🔹 DELETE (soft)
+# DELETE 
 @router.delete("/{schedule_id}")
 def delete_calendar_schedule(
     schedule_id: int,

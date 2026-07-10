@@ -10,7 +10,6 @@ def safe_fetch_one(result):
         return None
 
 
-# ====================== REGISTER ADMIN (Using Cognito Token) ======================
 def register_admin_service(db, token: dict):
     try:
         # Extract data from Cognito token
@@ -27,7 +26,6 @@ def register_admin_service(db, token: dict):
                 detail="Invalid token: missing sub or email"
             )
 
-        # Check if admin already exists
         existing = db.execute(
             text("SELECT admin_id FROM Reztro.Admins WHERE cognito_sub = :sub"),
             {"sub": cognito_sub}
@@ -40,7 +38,6 @@ def register_admin_service(db, token: dict):
                 "admin_id": existing[0]
             }
 
-        # Register new admin
         result = db.execute(
             text("""
                 EXEC Reztro.RegisterAdmin
@@ -79,7 +76,6 @@ def register_admin_service(db, token: dict):
         )
 
 
-# ====================== OTHER SERVICES (Improved) ======================
 def get_all_admins_service(db):
     try:
         result = db.execute(text("EXEC Reztro.GetAllAdmins"))
