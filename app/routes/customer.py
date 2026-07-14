@@ -81,15 +81,16 @@ async def update_customer(
     email: str = Form(None),
     phone: str = Form(None),
     address: str = Form(None),
+    profile_image_url: str = Form(None),
     file: UploadFile = File(None),
     db: Session = Depends(get_db)
 ):
     profile_image_url = None
-
+ 
     if file:
         upload_result = upload_to_cloudinary(file)
         profile_image_url = upload_result["url"]
-
+ 
     payload = CustomerUpdate(
         full_name=full_name,
         email=email,
@@ -97,14 +98,13 @@ async def update_customer(
         address=address,
         profile_image_url=profile_image_url
     )
-
+ 
     update_customer_service(db, customer_id, payload)
-
+ 
     return {
         "success": True,
         "message": "Customer updated successfully"
     }
-
 
 @router.delete("/{customer_id}")
 def delete_customer(customer_id: int, db: Session = Depends(get_db)):  

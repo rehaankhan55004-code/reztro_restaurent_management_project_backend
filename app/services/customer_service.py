@@ -78,8 +78,8 @@ def update_customer_service(db, customer_id: int, payload: CustomerUpdate):
     try:
         data = payload.model_dump()
 
-        if data.get("profile_image_url") is None:
-            data.pop("profile_image_url")
+        # if data.get("profile_image_url") is None:
+        #     data.pop("profile_image_url")
 
         db.execute(
             text("""
