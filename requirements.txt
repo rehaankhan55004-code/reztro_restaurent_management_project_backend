@@ -4,10 +4,10 @@ pydantic
 python-dotenv
 pyodbc
 pydantic[email]
-cloudinary 
+cloudinary
 python-multipart
 pydantic_settings
-python-jose
+bcrypt
 cryptography
 requests
 websockets

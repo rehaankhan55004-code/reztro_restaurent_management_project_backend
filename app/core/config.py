@@ -8,16 +8,13 @@ class Settings(BaseSettings):
         extra="ignore"
     )
 
-    # DATABASE
+    # DATABASE (Points to local SSMS in your .env)
     DATABASE_URL: str
 
     # CLOUDINARY
     CLOUD_NAME: str
     API_KEY: str
     API_SECRET: str
-    
-    USER_POOL_ID: str
-    CLIENT_ID: str
-    COGNITO_REGION: str
+
 
 settings = Settings()

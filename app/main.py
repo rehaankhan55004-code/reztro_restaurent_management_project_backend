@@ -30,7 +30,9 @@ from app.routes import (
     calendar_schedule_member,
     message,
     message_conversation,
-    admins
+    admins,
+    auth
+
 )
 from app.utils import cloudinary as cloudinary_router  
 from app.websocket.chat_socket import router as websocket_router
@@ -78,4 +80,5 @@ app.include_router(calendar_schedule_member.router)
 app.include_router(message.router)
 app.include_router(message_conversation.router)
 app.include_router(admins.router)
+app.include_router(auth.router)
 app.include_router(cloudinary_router.router)  
